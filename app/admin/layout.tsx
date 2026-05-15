@@ -9,7 +9,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!session) redirect("/login");
   if (session.role === "customer") redirect("/menu");
 
-  let restaurantName = "Zunayed";
+  let restaurantName = "Zunayed Restaurant";
   try {
     const redis = getRedis();
     const raw = await redis.get(KEYS.settings);
@@ -20,11 +20,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   } catch { /* use default */ }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#faf9f7" }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#faf9f7" }}>
+      {/* Sidebar — fixed height, scrollable nav */}
       <Sidebar session={session} restaurantName={restaurantName} />
-      <main style={{ flex: 1, minWidth: 0, overflow: "auto" }}>
-        {/* Mobile top padding */}
-        <div style={{ padding: "24px" }} className="pt-20 lg:pt-6">
+      {/* Main content — scrollable */}
+      <main style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden" }}>
+        <div style={{ padding: "28px 28px", paddingTop: 28 }} className="lg:pt-7 pt-20">
           {children}
         </div>
       </main>

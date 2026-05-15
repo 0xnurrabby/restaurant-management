@@ -1,87 +1,76 @@
 import { getSession } from "@/lib/auth";
 import { getRedis, KEYS } from "@/lib/redis";
 import type { Order, Table, InventoryItem } from "@/lib/types";
-import { StatCard } from "@/components/ui/stat-card";
-import { ShoppingCart, DollarSign, Grid3X3, ChefHat, Package, TrendingUp, Clock } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 import { RecentOrders } from "@/components/dashboard/recent-orders";
 
-async function getDashboardData() {
+async function getStats() {
   try {
     const redis = getRedis();
     const today = new Date(); today.setHours(0, 0, 0, 0);
-
     const orderIds = (await redis.get(KEYS.orders) as string[]) || [];
     const allOrders: Order[] = [];
-    for (const id of orderIds.slice(-100)) {
+    for (const id of orderIds.slice(-200)) {
       const raw = await redis.get(KEYS.order(id));
       if (raw) allOrders.push(typeof raw === "string" ? JSON.parse(raw) : raw as Order);
     }
-
-    const todayOrders = allOrders.filter((o) => new Date(o.createdAt) >= today);
-    const activeOrders = allOrders.filter((o) => ["pending", "preparing", "ready"].includes(o.status));
-    const pendingKitchen = allOrders.filter((o) => ["pending", "preparing"].includes(o.status));
-    const todayRevenue = todayOrders.filter((o) => o.isPaid).reduce((s, o) => s + o.total, 0);
-
+    const todayOrders = allOrders.filter(o => new Date(o.createdAt) >= today);
+    const todayRevenue = todayOrders.filter(o => o.isPaid).reduce((s, o) => s + o.total, 0);
+    const activeOrders = allOrders.filter(o => ["pending", "preparing", "ready"].includes(o.status)).length;
+    const kitchenQueue = allOrders.filter(o => ["pending", "preparing"].includes(o.status)).length;
     const tableIds = (await redis.get(KEYS.tables) as string[]) || [];
     let activeTables = 0;
-    for (const id of tableIds) {
-      const raw = await redis.get(KEYS.table(id));
-      if (raw) { const t: Table = typeof raw === "string" ? JSON.parse(raw) : raw as Table; if (t.status === "occupied") activeTables++; }
-    }
-
+    for (const id of tableIds) { const raw = await redis.get(KEYS.table(id)); if (raw) { const t: Table = typeof raw === "string" ? JSON.parse(raw) : raw as Table; if (t.status === "occupied") activeTables++; } }
     const invIds = (await redis.get(KEYS.inventory) as string[]) || [];
     let lowStock = 0;
-    for (const id of invIds) {
-      const raw = await redis.get(KEYS.inventoryItem(id));
-      if (raw) { const item: InventoryItem = typeof raw === "string" ? JSON.parse(raw) : raw as InventoryItem; if (item.quantity <= item.minQuantity) lowStock++; }
-    }
+    for (const id of invIds) { const raw = await redis.get(KEYS.inventoryItem(id)); if (raw) { const i: InventoryItem = typeof raw === "string" ? JSON.parse(raw) : raw as InventoryItem; if (i.quantity <= i.minQuantity) lowStock++; } }
+    const recent = allOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8);
+    return { todayOrders: todayOrders.length, todayRevenue, activeOrders, kitchenQueue, activeTables, totalTables: tableIds.length, totalOrders: allOrders.length, lowStock, recent };
+  } catch { return { todayOrders: 0, todayRevenue: 0, activeOrders: 0, kitchenQueue: 0, activeTables: 0, totalTables: 0, totalOrders: 0, lowStock: 0, recent: [] }; }
+}
 
-    const recentOrders = allOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8);
-    return { totalOrders: allOrders.length, todayOrders: todayOrders.length, activeOrders: activeOrders.length, pendingKitchen: pendingKitchen.length, todayRevenue, activeTables, totalTables: tableIds.length, lowStock, recentOrders };
-  } catch {
-    return { totalOrders: 0, todayOrders: 0, activeOrders: 0, pendingKitchen: 0, todayRevenue: 0, activeTables: 0, totalTables: 0, lowStock: 0, recentOrders: [] };
-  }
+function StatBox({ title, value, sub, color }: { title: string; value: string | number; sub?: string; color: string }) {
+  return (
+    <div style={{ background: color, border: "2px solid #1a1a1a", borderRadius: 16, padding: "18px 20px" }}>
+      <div style={{ fontSize: 11, fontWeight: 800, color: "#6b6560", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>{title}</div>
+      <div style={{ fontSize: 28, fontWeight: 900, color: "#1a1a1a", lineHeight: 1, marginBottom: sub ? 6 : 0 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
 }
 
 export default async function AdminDashboard() {
   const session = await getSession();
-  const data = await getDashboardData();
+  const d = await getStats();
+  const name = session?.email.split("@")[0] ?? "Admin";
 
   return (
     <div>
-      {/* Page header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-6 bg-[#ff6b6b] border border-[#1a1a1a] rounded-full" />
-          <h1 className="text-xl font-black text-[#1a1a1a] tracking-tight">Dashboard</h1>
-        </div>
-        <p className="text-sm text-[#a8a29e] font-medium ml-4">
-          Good day, <span className="text-[#1a1a1a] font-semibold">{session?.email.split("@")[0]}</span>
-        </p>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>Dashboard</h1>
+        <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>স্বাগতম, {name}</p>
       </div>
 
-      {/* Stats row 1 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-        <StatCard title="Today's Orders"   value={data.todayOrders}                icon={<ShoppingCart size={15} />} color="coral"   trend={{ value: 12, label: "vs yesterday" }} />
-        <StatCard title="Today's Revenue"  value={formatCurrency(data.todayRevenue)} icon={<DollarSign size={15} />}   color="mint"    trend={{ value: 8,  label: "vs yesterday" }} />
-        <StatCard title="Active Tables"    value={`${data.activeTables}/${data.totalTables}`} icon={<Grid3X3 size={15} />} color="sky" />
-        <StatCard title="Kitchen Queue"    value={data.pendingKitchen}              icon={<ChefHat size={15} />}      color={data.pendingKitchen > 5 ? "amber" : "default"} />
+      {/* Stats grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
+        <StatBox title="আজকের অর্ডার" value={d.todayOrders} sub="+12% গতকালের তুলনায়" color="#fff0f0" />
+        <StatBox title="আজকের আয়" value={formatCurrency(d.todayRevenue)} sub="+8% গতকালের তুলনায়" color="#edfaf5" />
+        <StatBox title="সক্রিয় টেবিল" value={`${d.activeTables}/${d.totalTables}`} color="#edf5ff" />
+        <StatBox title="রান্নাঘর কিউ" value={d.kitchenQueue} color={d.kitchenQueue > 5 ? "#fff8ec" : "#faf9f7"} />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+        <StatBox title="সক্রিয় অর্ডার" value={d.activeOrders} color="#f0eeff" />
+        <StatBox title="কম স্টক আইটেম" value={d.lowStock} color={d.lowStock > 0 ? "#fff0f0" : "#faf9f7"} />
+        <StatBox title="মোট অর্ডার" value={d.totalOrders} color="#faf9f7" />
+        <StatBox title="মোট টেবিল" value={d.totalTables} color="#edf5ff" />
       </div>
 
-      {/* Stats row 2 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard title="Active Orders"    value={data.activeOrders}   icon={<Clock size={15} />}    color="lilac" />
-        <StatCard title="Low Stock Items"  value={data.lowStock}        icon={<Package size={15} />}  color={data.lowStock > 0 ? "coral" : "default"} />
-        <StatCard title="Total Orders"     value={data.totalOrders}    icon={<TrendingUp size={15} />} />
-        <StatCard title="Total Tables"     value={data.totalTables}    icon={<Grid3X3 size={15} />}  color="sky" />
-      </div>
-
-      {/* Charts */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2"><DashboardCharts /></div>
-        <div><RecentOrders orders={data.recentOrders} /></div>
+      {/* Charts + Recent */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 16 }}>
+        <DashboardCharts />
+        <RecentOrders orders={d.recent} />
       </div>
     </div>
   );

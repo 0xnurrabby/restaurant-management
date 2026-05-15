@@ -2,352 +2,191 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Modal } from "@/components/ui/modal";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { MenuItem, Category } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Pencil, Trash2, Layers, Search, Star, TrendingUp, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ToggleLeft, ToggleRight, Search } from "lucide-react";
 
-interface MenuClientProps {
-  initialCategories: Category[];
-  initialItems: MenuItem[];
-}
+interface Props { initialCategories: Category[]; initialItems: MenuItem[]; }
 
-export function MenuClient({ initialCategories, initialItems }: MenuClientProps) {
+const EMPTY_ITEM = { name: "", description: "", price: "", categoryId: "", image: "", status: "available" as MenuItem["status"], isFeatured: false, isPopular: false, preparationTime: "15", tags: "" };
+const EMPTY_CAT = { name: "", description: "" };
+
+export function MenuClient({ initialCategories, initialItems }: Props) {
   const [categories, setCategories] = useState(initialCategories);
   const [items, setItems] = useState(initialItems);
-  const [activeTab, setActiveTab] = useState<"items" | "categories">("items");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [tab, setTab] = useState<"items" | "categories">("items");
+  const [selCat, setSelCat] = useState("all");
   const [search, setSearch] = useState("");
+
+  // Item modal
   const [itemModal, setItemModal] = useState(false);
+  const [editItem, setEditItem] = useState<MenuItem | null>(null);
+  const [iForm, setIForm] = useState(EMPTY_ITEM);
+  const [iLoading, setILoading] = useState(false);
+
+  // Category modal
   const [catModal, setCatModal] = useState(false);
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [editingCat, setEditingCat] = useState<Category | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [editCat, setEditCat] = useState<Category | null>(null);
+  const [cForm, setCForm] = useState(EMPTY_CAT);
+  const [cLoading, setCLoading] = useState(false);
 
-  // Item form state
-  const [itemForm, setItemForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    categoryId: "",
-    image: "",
-    status: "available" as MenuItem["status"],
-    isFeatured: false,
-    isPopular: false,
-    preparationTime: "15",
-    calories: "",
-    tags: "",
-  });
+  // Delete confirm
+  const [delItem, setDelItem] = useState<MenuItem | null>(null);
+  const [delCat, setDelCat] = useState<Category | null>(null);
 
-  const [catForm, setCatForm] = useState({ name: "", description: "" });
-
-  const filteredItems = items.filter((item) => {
-    const matchCat = selectedCategory === "all" || item.categoryId === selectedCategory;
-    const matchSearch = !search || item.name.toLowerCase().includes(search.toLowerCase());
+  const filtered = items.filter(i => {
+    const matchCat = selCat === "all" || i.categoryId === selCat;
+    const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
-  const openItemModal = (item?: MenuItem) => {
-    if (item) {
-      setEditingItem(item);
-      setItemForm({
-        name: item.name,
-        description: item.description,
-        price: item.price.toString(),
-        categoryId: item.categoryId,
-        image: item.image || "",
-        status: item.status,
-        isFeatured: item.isFeatured,
-        isPopular: item.isPopular,
-        preparationTime: item.preparationTime.toString(),
-        calories: item.calories?.toString() || "",
-        tags: item.tags.join(", "),
-      });
-    } else {
-      setEditingItem(null);
-      setItemForm({
-        name: "",
-        description: "",
-        price: "",
-        categoryId: categories[0]?.id || "",
-        image: "",
-        status: "available",
-        isFeatured: false,
-        isPopular: false,
-        preparationTime: "15",
-        calories: "",
-        tags: "",
-      });
-    }
-    setItemModal(true);
-  };
+  /* ── Item CRUD ── */
+  const openAdd = () => { setEditItem(null); setIForm({ ...EMPTY_ITEM, categoryId: categories[0]?.id || "" }); setItemModal(true); };
+  const openEdit = (item: MenuItem) => { setEditItem(item); setIForm({ name: item.name, description: item.description, price: String(item.price), categoryId: item.categoryId, image: item.image || "", status: item.status, isFeatured: item.isFeatured, isPopular: item.isPopular, preparationTime: String(item.preparationTime), tags: item.tags.join(", ") }); setItemModal(true); };
 
-  const handleSaveItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    const payload = {
-      ...itemForm,
-      price: parseFloat(itemForm.price),
-      preparationTime: parseInt(itemForm.preparationTime),
-      calories: itemForm.calories ? parseInt(itemForm.calories) : undefined,
-      tags: itemForm.tags.split(",").map((t) => t.trim()).filter(Boolean),
-    };
-
+  const saveItem = async (e: React.FormEvent) => {
+    e.preventDefault(); setILoading(true);
+    const payload = { ...iForm, price: parseFloat(iForm.price), preparationTime: parseInt(iForm.preparationTime), tags: iForm.tags.split(",").map(t => t.trim()).filter(Boolean), image: iForm.image || undefined };
     try {
-      if (editingItem) {
-        const res = await fetch(`/api/menu/items/${editingItem.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setItems((prev) => prev.map((i) => (i.id === editingItem.id ? data.item : i)));
-        }
+      if (editItem) {
+        const res = await fetch(`/api/menu/items/${editItem.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        if (res.ok) { const d = await res.json(); setItems(prev => prev.map(i => i.id === editItem.id ? d.item : i)); }
       } else {
-        const res = await fetch("/api/menu/items", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setItems((prev) => [...prev, data.item]);
-        }
+        const res = await fetch("/api/menu/items", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        if (res.ok) { const d = await res.json(); setItems(prev => [...prev, d.item]); }
       }
       setItemModal(false);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setILoading(false); }
   };
 
-  const handleDeleteItem = async (id: string) => {
-    const res = await fetch(`/api/menu/items/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
-    }
-    setDeleteConfirm(null);
+  const deleteItem = async (item: MenuItem) => {
+    const res = await fetch(`/api/menu/items/${item.id}`, { method: "DELETE" });
+    if (res.ok) setItems(prev => prev.filter(i => i.id !== item.id));
+    setDelItem(null);
   };
 
-  const handleToggleStatus = async (item: MenuItem) => {
+  const toggleStatus = async (item: MenuItem) => {
     const newStatus = item.status === "available" ? "unavailable" : "available";
-    const res = await fetch(`/api/menu/items/${item.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) {
-      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: newStatus } : i)));
-    }
+    const res = await fetch(`/api/menu/items/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: newStatus }) });
+    if (res.ok) setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: newStatus } : i));
   };
 
-  const handleSaveCat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  /* ── Category CRUD ── */
+  const openAddCat = () => { setEditCat(null); setCForm(EMPTY_CAT); setCatModal(true); };
+  const openEditCat = (c: Category) => { setEditCat(c); setCForm({ name: c.name, description: c.description || "" }); setCatModal(true); };
+
+  const saveCat = async (e: React.FormEvent) => {
+    e.preventDefault(); setCLoading(true);
     try {
-      if (editingCat) {
-        const res = await fetch(`/api/menu/categories/${editingCat.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(catForm),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setCategories((prev) => prev.map((c) => (c.id === editingCat.id ? data.category : c)));
-        }
+      if (editCat) {
+        const res = await fetch(`/api/menu/categories/${editCat.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cForm) });
+        if (res.ok) { const d = await res.json(); setCategories(prev => prev.map(c => c.id === editCat.id ? d.category : c)); }
       } else {
-        const res = await fetch("/api/menu/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(catForm),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setCategories((prev) => [...prev, data.category]);
-        }
+        const res = await fetch("/api/menu/categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cForm) });
+        if (res.ok) { const d = await res.json(); setCategories(prev => [...prev, d.category]); }
       }
       setCatModal(false);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setCLoading(false); }
   };
+
+  const deleteCat = async (cat: Category) => {
+    const res = await fetch(`/api/menu/categories/${cat.id}`, { method: "DELETE" });
+    if (res.ok) setCategories(prev => prev.filter(c => c.id !== cat.id));
+    setDelCat(null);
+  };
+
+  const statusBadge = (s: string) => ({ background: s === "available" ? "#edfaf5" : "#fff0f0", color: s === "available" ? "#1a7a5e" : "#cc2b2b", border: `1.5px solid ${s === "available" ? "#52c4a0" : "#ff6b6b"}`, borderRadius: 99, padding: "2px 8px", fontSize: 10, fontWeight: 800 });
 
   return (
     <div>
-      <PageHeader
-        title="Menu Management"
-        description="Manage categories and menu items"
-        action={
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setEditingCat(null);
-                setCatForm({ name: "", description: "" });
-                setCatModal(true);
-              }}
-            >
-              <Plus size={14} />
-              Category
-            </Button>
-            <Button size="sm" onClick={() => openItemModal()}>
-              <Plus size={14} />
-              Item
-            </Button>
-          </div>
-        }
-      />
+      {/* Page header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>মেনু ম্যানেজমেন্ট</h1>
+          <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>ক্যাটাগরি এবং মেনু আইটেম পরিচালনা করুন</p>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          {tab === "categories"
+            ? <button onClick={openAddCat} style={addBtn}>+ ক্যাটাগরি যোগ করুন</button>
+            : <button onClick={openAdd} style={addBtn}>+ আইটেম যোগ করুন</button>}
+        </div>
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-4">
-        {(["items", "categories"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium border-2 capitalize transition-all ${
-              activeTab === tab
-                ? "bg-black text-white border-black"
-                : "bg-white border-stone-200 text-stone-600 hover:border-black"
-            }`}
-          >
-            {tab}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {(["items", "categories"] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700, border: "2px solid", borderColor: tab === t ? "#1a1a1a" : "#e2ddd7", background: tab === t ? "#1a1a1a" : "#fff", color: tab === t ? "#fff" : "#6b6560", cursor: "pointer" }}>
+            {t === "items" ? "আইটেম" : "ক্যাটাগরি"}
           </button>
         ))}
       </div>
 
-      {activeTab === "items" && (
+      {tab === "items" && (
         <>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search items..."
-              icon={<Search size={15} />}
-              className="sm:max-w-xs"
-            />
-            <div className="flex gap-1.5 flex-wrap">
-              <button
-                onClick={() => setSelectedCategory("all")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium border-2 transition-all ${
-                  selectedCategory === "all"
-                    ? "bg-black text-white border-black"
-                    : "bg-white border-stone-200 hover:border-stone-400"
-                }`}
-              >
-                All
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-medium border-2 transition-all ${
-                    selectedCategory === cat.id
-                      ? "bg-black text-white border-black"
-                      : "bg-white border-stone-200 hover:border-stone-400"
-                  }`}
-                >
-                  {cat.name}
+          <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+            <div style={{ position: "relative", maxWidth: 260 }}>
+              <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#a8a29e" }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="আইটেম খুঁজুন..." style={{ padding: "9px 12px 9px 32px", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }} />
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[{ id: "all", name: "সব" }, ...categories].map(c => (
+                <button key={c.id} onClick={() => setSelCat(c.id)} style={{ padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "2px solid", borderColor: selCat === c.id ? "#1a1a1a" : "#e2ddd7", background: selCat === c.id ? "#1a1a1a" : "#fff", color: selCat === c.id ? "#fff" : "#6b6560", cursor: "pointer" }}>
+                  {c.name}
                 </button>
               ))}
             </div>
           </div>
 
-          {filteredItems.length === 0 ? (
-            <EmptyState
-              icon={<Layers size={24} />}
-              title="No items found"
-              description="Add your first menu item"
-              action={<Button onClick={() => openItemModal()}>Add Item</Button>}
-            />
+          {filtered.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#a8a29e" }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>🍽️</div>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>কোনো আইটেম নেই</div>
+              <div style={{ fontSize: 13, marginBottom: 16 }}>প্রথম মেনু আইটেম যোগ করুন</div>
+              <button onClick={openAdd} style={addBtn}>+ আইটেম যোগ করুন</button>
+            </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredItems.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.03 }}
-                >
-                  <Card className="overflow-hidden p-0">
-                    {item.image && (
-                      <div className="h-32 bg-stone-100 overflow-hidden">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                    <div className="p-3">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold line-clamp-1">{item.name}</p>
-                          <p className="text-xs text-stone-500 line-clamp-2 mt-0.5">
-                            {item.description}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                        {item.isFeatured && (
-                          <Badge variant="warning">
-                            <Star size={9} className="mr-0.5" />
-                            Featured
-                          </Badge>
-                        )}
-                        {item.isPopular && (
-                          <Badge variant="info">
-                            <TrendingUp size={9} className="mr-0.5" />
-                            Popular
-                          </Badge>
-                        )}
-                        <Badge
-                          variant={item.status === "available" ? "success" : "danger"}
-                        >
-                          {item.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-sm font-bold">
-                          {formatCurrency(item.price)}
-                        </span>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => handleToggleStatus(item)}
-                            className="p-1.5 hover:bg-stone-100 rounded-lg transition-colors"
-                            title="Toggle availability"
-                          >
-                            {item.status === "available" ? (
-                              <ToggleRight size={16} className="text-green-600" />
-                            ) : (
-                              <ToggleLeft size={16} className="text-stone-400" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => openItemModal(item)}
-                            className="p-1.5 hover:bg-stone-100 rounded-lg transition-colors"
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(item.id)}
-                            className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+              {filtered.map((item, idx) => (
+                <motion.div key={item.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
+                  style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 14, padding: "16px 16px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+                  {/* Image placeholder or image */}
+                  {item.image ? (
+                    <div style={{ height: 120, borderRadius: 10, overflow: "hidden", background: "#f5f0e8", border: "1.5px solid #e2ddd7" }}>
+                      <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} loading="lazy" />
                     </div>
-                  </Card>
+                  ) : (
+                    <div style={{ height: 80, borderRadius: 10, background: "#f5f0e8", border: "1.5px dashed #d4cdc3", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 4 }}>
+                      <span style={{ fontSize: 24 }}>🍽️</span>
+                      <span style={{ fontSize: 10, color: "#a8a29e", fontWeight: 600 }}>ছবি নেই</span>
+                    </div>
+                  )}
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
+                      <div style={{ fontWeight: 800, fontSize: 14, color: "#1a1a1a", lineHeight: 1.3 }}>{item.name}</div>
+                      <span style={statusBadge(item.status)}>{item.status === "available" ? "পাওয়া যায়" : "অনুপলব্ধ"}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "#a8a29e", lineHeight: 1.5, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.description}</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                      {item.isFeatured && <span style={{ ...tagStyle, background: "#fff3d4", color: "#8a6200", borderColor: "#ffb347" }}>⭐ ফিচার্ড</span>}
+                      {item.isPopular && <span style={{ ...tagStyle, background: "#fff0f0", color: "#cc2b2b", borderColor: "#ff6b6b" }}>🔥 জনপ্রিয়</span>}
+                      <span style={{ fontWeight: 900, fontSize: 15, color: "#ff6b6b", marginLeft: "auto" }}>{formatCurrency(item.price)}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 6, borderTop: "1.5px solid #f5f0e8", paddingTop: 10 }}>
+                    <button onClick={() => toggleStatus(item)} style={{ flex: 1, padding: "7px", border: "1.5px solid #e2ddd7", borderRadius: 8, background: "#faf9f7", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                      {item.status === "available" ? <ToggleRight size={14} color="#52c4a0" /> : <ToggleLeft size={14} color="#a8a29e" />}
+                      {item.status === "available" ? "চালু" : "বন্ধ"}
+                    </button>
+                    <button onClick={() => openEdit(item)} style={{ padding: "7px 12px", border: "1.5px solid #1a1a1a", borderRadius: 8, background: "#fff", cursor: "pointer" }}>
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => setDelItem(item)} style={{ padding: "7px 12px", border: "1.5px solid #ff6b6b", borderRadius: 8, background: "#fff0f0", cursor: "pointer" }}>
+                      <Trash2 size={13} color="#cc2b2b" />
+                    </button>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -355,221 +194,139 @@ export function MenuClient({ initialCategories, initialItems }: MenuClientProps)
         </>
       )}
 
-      {activeTab === "categories" && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {categories.map((cat, i) => (
-            <motion.div
-              key={cat.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <Card>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold">{cat.name}</p>
-                    <p className="text-xs text-stone-500 mt-0.5">{cat.description}</p>
-                    <p className="text-xs text-stone-400 mt-1">
-                      {items.filter((i) => i.categoryId === cat.id).length} items
-                    </p>
+      {tab === "categories" && (
+        <>
+          {categories.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "#a8a29e" }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>কোনো ক্যাটাগরি নেই</div>
+              <button onClick={openAddCat} style={addBtn}>+ ক্যাটাগরি যোগ করুন</button>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+              {categories.map((cat, idx) => (
+                <motion.div key={cat.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
+                  style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 14, padding: "18px 18px 14px" }}>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: "#1a1a1a", marginBottom: 4 }}>{cat.name}</div>
+                  <div style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10 }}>{cat.description || "কোনো বিবরণ নেই"}</div>
+                  <div style={{ fontSize: 12, color: "#6b6560", fontWeight: 600, marginBottom: 12 }}>
+                    {items.filter(i => i.categoryId === cat.id).length} টি আইটেম
                   </div>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => {
-                        setEditingCat(cat);
-                        setCatForm({ name: cat.name, description: cat.description || "" });
-                        setCatModal(true);
-                      }}
-                      className="p-1.5 hover:bg-stone-100 rounded-lg"
-                    >
-                      <Pencil size={14} />
+                  <div style={{ display: "flex", gap: 8, borderTop: "1.5px solid #f5f0e8", paddingTop: 12 }}>
+                    <button onClick={() => openEditCat(cat)} style={{ flex: 1, padding: "8px", border: "1.5px solid #1a1a1a", borderRadius: 8, background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                      <Pencil size={12} /> সম্পাদনা
+                    </button>
+                    <button onClick={() => setDelCat(cat)} style={{ padding: "8px 12px", border: "1.5px solid #ff6b6b", borderRadius: 8, background: "#fff0f0", cursor: "pointer" }}>
+                      <Trash2 size={12} color="#cc2b2b" />
                     </button>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-          {categories.length === 0 && (
-            <EmptyState
-              icon={<Layers size={24} />}
-              title="No categories"
-              description="Create your first category"
-            />
+                </motion.div>
+              ))}
+            </div>
           )}
+        </>
+      )}
+
+      {/* ── Item Modal ── */}
+      {itemModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setItemModal(false)} />
+          <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 18, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", position: "relative", zIndex: 1 }}>
+            <div style={{ padding: "16px 20px", borderBottom: "2px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontWeight: 900, fontSize: 15 }}>{editItem ? "আইটেম সম্পাদনা" : "নতুন আইটেম যোগ করুন"}</div>
+              <button onClick={() => setItemModal(false)} style={{ width: 28, height: 28, border: "2px solid #1a1a1a", borderRadius: 7, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
+            </div>
+            <form onSubmit={saveItem} style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>{label("নাম")} <input required value={iForm.name} onChange={e => setIForm(f => ({ ...f, name: e.target.value }))} style={inp} /></div>
+                <div>{label("মূল্য (৳)")} <input required type="number" min={0} value={iForm.price} onChange={e => setIForm(f => ({ ...f, price: e.target.value }))} style={inp} /></div>
+              </div>
+              <div>{label("বিবরণ")} <textarea value={iForm.description} onChange={e => setIForm(f => ({ ...f, description: e.target.value }))} rows={2} style={{ ...inp, resize: "vertical" }} /></div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>{label("ক্যাটাগরি")}
+                  <select required value={iForm.categoryId} onChange={e => setIForm(f => ({ ...f, categoryId: e.target.value }))} style={inp}>
+                    <option value="">বেছে নিন</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>{label("স্ট্যাটাস")}
+                  <select value={iForm.status} onChange={e => setIForm(f => ({ ...f, status: e.target.value as MenuItem["status"] }))} style={inp}>
+                    <option value="available">পাওয়া যায়</option>
+                    <option value="unavailable">অনুপলব্ধ</option>
+                    <option value="sold_out">স্টক শেষ</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>{label("প্রস্তুতির সময় (মিনিট)")} <input type="number" min={1} value={iForm.preparationTime} onChange={e => setIForm(f => ({ ...f, preparationTime: e.target.value }))} style={inp} /></div>
+                <div>{label("ট্যাগ (কমা দিয়ে)")} <input value={iForm.tags} onChange={e => setIForm(f => ({ ...f, tags: e.target.value }))} placeholder="chicken, spicy" style={inp} /></div>
+              </div>
+              <div>{label("ছবির URL (ঐচ্ছিক)")} <input type="url" value={iForm.image} onChange={e => setIForm(f => ({ ...f, image: e.target.value }))} placeholder="https://..." style={inp} /></div>
+              <div style={{ display: "flex", gap: 16 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                  <input type="checkbox" checked={iForm.isFeatured} onChange={e => setIForm(f => ({ ...f, isFeatured: e.target.checked }))} style={{ width: 16, height: 16 }} /> ⭐ ফিচার্ড
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                  <input type="checkbox" checked={iForm.isPopular} onChange={e => setIForm(f => ({ ...f, isPopular: e.target.checked }))} style={{ width: 16, height: 16 }} /> 🔥 জনপ্রিয়
+                </label>
+              </div>
+              <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
+                <button type="button" onClick={() => setItemModal(false)} style={secBtn}>বাতিল</button>
+                <button type="submit" disabled={iLoading} style={priBtn}>{iLoading ? "সংরক্ষণ হচ্ছে..." : editItem ? "পরিবর্তন সংরক্ষণ" : "আইটেম যোগ করুন"}</button>
+              </div>
+            </form>
+          </motion.div>
         </div>
       )}
 
-      {/* Item Modal */}
-      <Modal
-        isOpen={itemModal}
-        onClose={() => setItemModal(false)}
-        title={editingItem ? "Edit Item" : "Add Menu Item"}
-        size="lg"
-      >
-        <form onSubmit={handleSaveItem} className="p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Name"
-              value={itemForm.name}
-              onChange={(e) => setItemForm((f) => ({ ...f, name: e.target.value }))}
-              required
-            />
-            <Input
-              label="Price ($)"
-              type="number"
-              step="0.01"
-              value={itemForm.price}
-              onChange={(e) => setItemForm((f) => ({ ...f, price: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">Description</label>
-            <textarea
-              value={itemForm.description}
-              onChange={(e) => setItemForm((f) => ({ ...f, description: e.target.value }))}
-              className="w-full border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-black resize-none"
-              rows={2}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">Category</label>
-              <select
-                value={itemForm.categoryId}
-                onChange={(e) => setItemForm((f) => ({ ...f, categoryId: e.target.value }))}
-                className="w-full border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-black"
-                required
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+      {/* ── Category Modal ── */}
+      {catModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setCatModal(false)} />
+          <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 18, width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
+            <div style={{ padding: "16px 20px", borderBottom: "2px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontWeight: 900, fontSize: 15 }}>{editCat ? "ক্যাটাগরি সম্পাদনা" : "নতুন ক্যাটাগরি"}</div>
+              <button onClick={() => setCatModal(false)} style={{ width: 28, height: 28, border: "2px solid #1a1a1a", borderRadius: 7, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">Status</label>
-              <select
-                value={itemForm.status}
-                onChange={(e) => setItemForm((f) => ({ ...f, status: e.target.value as MenuItem["status"] }))}
-                className="w-full border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-black"
-              >
-                <option value="available">Available</option>
-                <option value="unavailable">Unavailable</option>
-                <option value="sold_out">Sold Out</option>
-              </select>
-            </div>
-          </div>
-          <Input
-            label="Image URL"
-            value={itemForm.image}
-            onChange={(e) => setItemForm((f) => ({ ...f, image: e.target.value }))}
-            placeholder="https://..."
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Prep Time (min)"
-              type="number"
-              value={itemForm.preparationTime}
-              onChange={(e) => setItemForm((f) => ({ ...f, preparationTime: e.target.value }))}
-            />
-            <Input
-              label="Calories"
-              type="number"
-              value={itemForm.calories}
-              onChange={(e) => setItemForm((f) => ({ ...f, calories: e.target.value }))}
-              placeholder="Optional"
-            />
-          </div>
-          <Input
-            label="Tags (comma separated)"
-            value={itemForm.tags}
-            onChange={(e) => setItemForm((f) => ({ ...f, tags: e.target.value }))}
-            placeholder="vegetarian, spicy, popular"
-          />
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={itemForm.isFeatured}
-                onChange={(e) => setItemForm((f) => ({ ...f, isFeatured: e.target.checked }))}
-                className="rounded"
-              />
-              <span className="text-sm">Featured</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={itemForm.isPopular}
-                onChange={(e) => setItemForm((f) => ({ ...f, isPopular: e.target.checked }))}
-                className="rounded"
-              />
-              <span className="text-sm">Popular</span>
-            </label>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={() => setItemModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" loading={loading}>
-              {editingItem ? "Save Changes" : "Add Item"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Category Modal */}
-      <Modal
-        isOpen={catModal}
-        onClose={() => setCatModal(false)}
-        title={editingCat ? "Edit Category" : "Add Category"}
-        size="sm"
-      >
-        <form onSubmit={handleSaveCat} className="p-4 space-y-3">
-          <Input
-            label="Category Name"
-            value={catForm.name}
-            onChange={(e) => setCatForm((f) => ({ ...f, name: e.target.value }))}
-            required
-            autoFocus
-          />
-          <Input
-            label="Description"
-            value={catForm.description}
-            onChange={(e) => setCatForm((f) => ({ ...f, description: e.target.value }))}
-            placeholder="Optional"
-          />
-          <div className="flex gap-2 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={() => setCatModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" loading={loading}>
-              {editingCat ? "Save" : "Add"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Delete Confirm */}
-      <Modal
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        title="Delete Item"
-        size="sm"
-      >
-        <div className="p-4">
-          <p className="text-sm text-stone-600 mb-4">
-            Are you sure you want to delete this item? This action cannot be undone.
-          </p>
-          <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1" onClick={() => setDeleteConfirm(null)}>
-              Cancel
-            </Button>
-            <Button variant="danger" className="flex-1" onClick={() => deleteConfirm && handleDeleteItem(deleteConfirm)}>
-              Delete
-            </Button>
-          </div>
+            <form onSubmit={saveCat} style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div>{label("ক্যাটাগরির নাম")} <input required value={cForm.name} onChange={e => setCForm(f => ({ ...f, name: e.target.value }))} autoFocus style={inp} /></div>
+              <div>{label("বিবরণ (ঐচ্ছিক)")} <input value={cForm.description} onChange={e => setCForm(f => ({ ...f, description: e.target.value }))} style={inp} /></div>
+              <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
+                <button type="button" onClick={() => setCatModal(false)} style={secBtn}>বাতিল</button>
+                <button type="submit" disabled={cLoading} style={priBtn}>{cLoading ? "সংরক্ষণ হচ্ছে..." : editCat ? "সংরক্ষণ করুন" : "যোগ করুন"}</button>
+              </div>
+            </form>
+          </motion.div>
         </div>
-      </Modal>
+      )}
+
+      {/* Delete Item confirm */}
+      {delItem && <DeleteModal title="আইটেম মুছুন" msg={`"${delItem.name}" মুছে ফেলবেন?`} onCancel={() => setDelItem(null)} onConfirm={() => deleteItem(delItem)} />}
+      {delCat && <DeleteModal title="ক্যাটাগরি মুছুন" msg={`"${delCat.name}" ক্যাটাগরি মুছে ফেলবেন?`} onCancel={() => setDelCat(null)} onConfirm={() => deleteCat(delCat)} />}
     </div>
   );
 }
+
+function DeleteModal({ title, msg, onCancel, onConfirm }: { title: string; msg: string; onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={onCancel} />
+      <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 16, padding: 24, maxWidth: 360, width: "100%", position: "relative", zIndex: 1 }}>
+        <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 10 }}>{title}</div>
+        <div style={{ fontSize: 14, color: "#6b6560", marginBottom: 20 }}>{msg} এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onCancel} style={secBtn}>বাতিল</button>
+          <button onClick={onConfirm} style={{ ...priBtn, background: "#ff6b6b", borderColor: "#ff6b6b" }}>মুছুন</button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// Shared styles
+const addBtn: React.CSSProperties = { padding: "10px 18px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" };
+const secBtn: React.CSSProperties = { flex: 1, padding: "11px", border: "2px solid #1a1a1a", borderRadius: 10, background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit" };
+const priBtn: React.CSSProperties = { flex: 1, padding: "11px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" };
+const inp: React.CSSProperties = { width: "100%", padding: "10px 12px", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", background: "#faf9f7", boxSizing: "border-box" };
+const tagStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, borderRadius: 99, padding: "2px 8px", border: "1px solid" };
+const label = (text: string) => <div style={{ fontSize: 11, fontWeight: 800, color: "#1a1a1a", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{text}</div>;

@@ -2,333 +2,253 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Modal } from "@/components/ui/modal";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { User, UserRole, StaffPermission } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
-import { Users, Plus, Pencil, Trash2, Shield, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Shield, Clock, CheckCircle, XCircle } from "lucide-react";
 
-interface StaffClientProps {
-  initialStaff: User[];
-  currentRole: UserRole;
-}
-
-const allPermissions: { key: StaffPermission; label: string }[] = [
-  { key: "pos", label: "POS" },
-  { key: "kitchen", label: "Kitchen" },
-  { key: "kds", label: "KDS" },
-  { key: "inventory", label: "Inventory" },
-  { key: "tables", label: "Tables" },
-  { key: "reports", label: "Reports" },
-  { key: "billing", label: "Billing" },
-  { key: "menu", label: "Menu" },
-  { key: "staff", label: "Staff" },
-  { key: "settings", label: "Settings" },
-  { key: "notifications", label: "Notifications" },
+const PERMISSIONS: { key: StaffPermission; label: string; desc: string }[] = [
+  { key: "pos", label: "POS সিস্টেম", desc: "অর্ডার তৈরি ও পেমেন্ট" },
+  { key: "kitchen", label: "রান্নাঘর", desc: "রান্নার অর্ডার দেখা" },
+  { key: "kds", label: "KDS ডিসপ্লে", desc: "Kitchen Display System" },
+  { key: "tables", label: "টেবিল ব্যবস্থাপনা", desc: "টেবিল স্ট্যাটাস পরিবর্তন" },
+  { key: "menu", label: "মেনু", desc: "মেনু আইটেম পরিচালনা" },
+  { key: "inventory", label: "ইনভেন্টরি", desc: "স্টক আপডেট করা" },
+  { key: "reports", label: "রিপোর্ট", desc: "সেলস রিপোর্ট দেখা" },
+  { key: "billing", label: "বিলিং", desc: "বিল তৈরি ও পরিশোধ" },
+  { key: "staff", label: "স্টাফ", desc: "স্টাফ দেখা ও পরিচালনা" },
+  { key: "settings", label: "সেটিংস", desc: "রেস্তোরাঁ সেটিংস" },
+  { key: "notifications", label: "নোটিফিকেশন", desc: "সব নোটিফিকেশন দেখা" },
 ];
 
-const roleColors: Record<string, string> = {
-  main_admin: "bg-purple-50 text-purple-700 border-purple-200",
-  admin: "bg-blue-50 text-blue-700 border-blue-200",
-  staff: "bg-stone-50 text-stone-700 border-stone-200",
+const ROLE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
+  main_admin: { bg: "#f0eeff", color: "#5b4cd4", border: "#a29bfe" },
+  admin:      { bg: "#edf5ff", color: "#1a5fa8", border: "#74b9ff" },
+  staff:      { bg: "#faf9f7", color: "#6b6560", border: "#e2ddd7" },
 };
 
-export function StaffClient({ initialStaff, currentRole }: StaffClientProps) {
+export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[]; currentRole: UserRole }) {
   const [staff, setStaff] = useState(initialStaff);
   const [modal, setModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editUser, setEditUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<User | null>(null);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    role: "staff" as UserRole,
-    permissions: [] as StaffPermission[],
-  });
+  const [delUser, setDelUser] = useState<User | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", role: "staff" as UserRole, permissions: [] as StaffPermission[] });
 
-  const openModal = (user?: User) => {
-    if (user) {
-      setEditingUser(user);
-      setForm({
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions,
-      });
-    } else {
-      setEditingUser(null);
-      setForm({ name: "", email: "", role: "staff", permissions: [] });
-    }
-    setModal(true);
+  const openAdd = () => { setEditUser(null); setForm({ name: "", email: "", role: "staff", permissions: [] }); setModal(true); };
+  const openEdit = (u: User) => { setEditUser(u); setForm({ name: u.name, email: u.email, role: u.role, permissions: u.permissions }); setModal(true); };
+
+  const togglePerm = (p: StaffPermission) => {
+    setForm(f => ({ ...f, permissions: f.permissions.includes(p) ? f.permissions.filter(x => x !== p) : [...f.permissions, p] }));
   };
 
-  const togglePermission = (perm: StaffPermission) => {
-    setForm((f) => ({
-      ...f,
-      permissions: f.permissions.includes(perm)
-        ? f.permissions.filter((p) => p !== perm)
-        : [...f.permissions, perm],
-    }));
-  };
+  const selectAllPerms = () => setForm(f => ({ ...f, permissions: PERMISSIONS.map(p => p.key) }));
+  const clearAllPerms = () => setForm(f => ({ ...f, permissions: [] }));
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault(); setLoading(true);
     try {
-      if (editingUser) {
-        const res = await fetch(`/api/staff/${encodeURIComponent(editingUser.email)}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setStaff((prev) => prev.map((s) => (s.email === editingUser.email ? data.user : s)));
-        }
+      if (editUser) {
+        const res = await fetch(`/api/staff/${encodeURIComponent(editUser.email)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) { const d = await res.json(); setStaff(prev => prev.map(s => s.email === editUser.email ? d.user : s)); }
       } else {
-        const res = await fetch("/api/staff", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setStaff((prev) => [...prev, data.user]);
-        }
+        const res = await fetch("/api/staff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) { const d = await res.json(); setStaff(prev => [...prev, d.user]); }
       }
       setModal(false);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  const handleDelete = async (user: User) => {
-    const res = await fetch(`/api/staff/${encodeURIComponent(user.email)}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      setStaff((prev) => prev.filter((s) => s.email !== user.email));
-    }
-    setDeleteConfirm(null);
+  const deleteUser = async (u: User) => {
+    const res = await fetch(`/api/staff/${encodeURIComponent(u.email)}`, { method: "DELETE" });
+    if (res.ok) setStaff(prev => prev.filter(s => s.email !== u.email));
+    setDelUser(null);
   };
 
-  const handleToggleActive = async (user: User) => {
-    const res = await fetch(`/api/staff/${encodeURIComponent(user.email)}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isActive: !user.isActive }),
-    });
-    if (res.ok) {
-      setStaff((prev) =>
-        prev.map((s) => (s.email === user.email ? { ...s, isActive: !user.isActive } : s))
-      );
-    }
+  const toggleActive = async (u: User) => {
+    const res = await fetch(`/api/staff/${encodeURIComponent(u.email)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !u.isActive }) });
+    if (res.ok) setStaff(prev => prev.map(s => s.email === u.email ? { ...s, isActive: !u.isActive } : s));
   };
+
+  const isEditable = (u: User) => currentRole === "main_admin" && u.role !== "main_admin";
 
   return (
     <div>
-      <PageHeader
-        title="Staff Management"
-        description="Manage team members and permissions"
-        action={
-          currentRole === "main_admin" && (
-            <Button size="sm" onClick={() => openModal()}>
-              <Plus size={14} />
-              Add Staff
-            </Button>
-          )
-        }
-      />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>স্টাফ ম্যানেজমেন্ট</h1>
+          <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>টিম সদস্য ও অনুমতি পরিচালনা করুন</p>
+        </div>
+        {currentRole === "main_admin" && (
+          <button onClick={openAdd} style={{ padding: "10px 18px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
+            + নতুন স্টাফ
+          </button>
+        )}
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "মোট স্টাফ", value: staff.length, bg: "#faf9f7" },
+          { label: "সক্রিয়", value: staff.filter(s => s.isActive).length, bg: "#edfaf5" },
+          { label: "নিষ্ক্রিয়", value: staff.filter(s => !s.isActive).length, bg: staff.filter(s => !s.isActive).length > 0 ? "#fff0f0" : "#faf9f7" },
+        ].map(s => (
+          <div key={s.label} style={{ background: s.bg, border: "2px solid #1a1a1a", borderRadius: 14, padding: "16px 18px" }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#a8a29e", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{s.label}</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: "#1a1a1a" }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
 
       {staff.length === 0 ? (
-        <EmptyState
-          icon={<Users size={24} />}
-          title="No staff members"
-          description="Add your first team member"
-          action={
-            currentRole === "main_admin" && (
-              <Button onClick={() => openModal()}>Add Staff Member</Button>
-            )
-          }
-        />
+        <div style={{ textAlign: "center", padding: "60px 0", color: "#a8a29e" }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: "#1a1a1a" }}>কোনো স্টাফ সদস্য নেই</div>
+          {currentRole === "main_admin" && <button onClick={openAdd} style={{ padding: "10px 20px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>+ প্রথম স্টাফ যোগ করুন</button>}
+        </div>
       ) : (
-        <div className="space-y-2">
-          {staff.map((member, i) => (
-            <motion.div
-              key={member.email}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-            >
-              <Card className={`${!member.isActive ? "opacity-60" : ""}`}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-stone-200 rounded-xl flex items-center justify-center text-base font-bold shrink-0">
-                    {member.name[0]?.toUpperCase() || member.email[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold">{member.name}</span>
-                      <span
-                        className={`text-[10px] font-medium px-2 py-0.5 rounded-lg border capitalize ${
-                          roleColors[member.role] || roleColors.staff
-                        }`}
-                      >
-                        {member.role.replace("_", " ")}
-                      </span>
-                      {!member.isActive && (
-                        <Badge variant="danger">Inactive</Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-stone-500 mt-0.5">{member.email}</p>
-                    {member.permissions.length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {member.permissions.slice(0, 4).map((p) => (
-                          <Badge key={p} variant="info" className="text-[10px]">
-                            {p}
-                          </Badge>
-                        ))}
-                        {member.permissions.length > 4 && (
-                          <span className="text-[10px] text-stone-400">
-                            +{member.permissions.length - 4}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <div className="text-right text-xs text-stone-400 mr-2">
-                      {member.lastLogin && (
-                        <>
-                          <Clock size={10} className="inline mr-0.5" />
-                          {formatDate(member.lastLogin)}
-                        </>
-                      )}
-                    </div>
-                    {currentRole === "main_admin" && member.role !== "main_admin" && (
-                      <>
-                        <button
-                          onClick={() => handleToggleActive(member)}
-                          className={`px-2 py-1 rounded-lg text-xs font-medium border-2 transition-all ${
-                            member.isActive
-                              ? "border-stone-200 hover:border-stone-400 text-stone-600"
-                              : "border-green-200 bg-green-50 text-green-700 hover:border-green-400"
-                          }`}
-                        >
-                          {member.isActive ? "Disable" : "Enable"}
-                        </button>
-                        <button
-                          onClick={() => openModal(member)}
-                          className="p-1.5 hover:bg-stone-100 rounded-lg"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(member)}
-                          className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </>
-                    )}
-                  </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {staff.map((u, i) => {
+            const rc = ROLE_COLORS[u.role] || ROLE_COLORS.staff;
+            return (
+              <motion.div key={u.email} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 14, padding: "16px 18px", display: "flex", alignItems: "flex-start", gap: 14, opacity: u.isActive ? 1 : 0.6 }}>
+                {/* Avatar */}
+                <div style={{ width: 44, height: 44, background: "#ff6b6b", border: "2px solid #1a1a1a", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 16, color: "#fff", flexShrink: 0 }}>
+                  {u.name[0]?.toUpperCase() || u.email[0].toUpperCase()}
                 </div>
-              </Card>
-            </motion.div>
-          ))}
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                    <span style={{ fontWeight: 800, fontSize: 15, color: "#1a1a1a" }}>{u.name}</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 99, border: `1.5px solid ${rc.border}`, background: rc.bg, color: rc.color }}>
+                      {u.role === "main_admin" ? "প্রধান অ্যাডমিন" : u.role === "admin" ? "অ্যাডমিন" : "স্টাফ"}
+                    </span>
+                    {!u.isActive && <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 99, border: "1.5px solid #ff6b6b", background: "#fff0f0", color: "#cc2b2b" }}>নিষ্ক্রিয়</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#a8a29e", fontWeight: 600, marginBottom: 8 }}>{u.email}</div>
+
+                  {/* Permissions */}
+                  {u.role === "staff" && u.permissions.length > 0 && (
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                      {u.permissions.map(p => {
+                        const pInfo = PERMISSIONS.find(x => x.key === p);
+                        return <span key={p} style={{ fontSize: 10, fontWeight: 700, background: "#f0eeff", border: "1px solid #a29bfe", borderRadius: 99, padding: "2px 8px", color: "#5b4cd4" }}>{pInfo?.label || p}</span>;
+                      })}
+                    </div>
+                  )}
+                  {u.role === "staff" && u.permissions.length === 0 && (
+                    <span style={{ fontSize: 11, color: "#a8a29e", fontStyle: "italic" }}>কোনো অনুমতি নেই</span>
+                  )}
+
+                  {u.lastLogin && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#a8a29e", marginTop: 6 }}>
+                      <Clock size={11} /> সর্বশেষ লগইন: {formatDate(u.lastLogin)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {isEditable(u) && (
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button onClick={() => toggleActive(u)} title={u.isActive ? "নিষ্ক্রিয় করুন" : "সক্রিয় করুন"}
+                      style={{ padding: "7px 10px", border: "1.5px solid #e2ddd7", borderRadius: 8, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700 }}>
+                      {u.isActive ? <XCircle size={14} color="#cc2b2b" /> : <CheckCircle size={14} color="#52c4a0" />}
+                      {u.isActive ? "বন্ধ" : "চালু"}
+                    </button>
+                    <button onClick={() => openEdit(u)} style={{ padding: "7px 10px", border: "1.5px solid #1a1a1a", borderRadius: 8, background: "#fff", cursor: "pointer" }}>
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => setDelUser(u)} style={{ padding: "7px 10px", border: "1.5px solid #ff6b6b", borderRadius: 8, background: "#fff0f0", cursor: "pointer" }}>
+                      <Trash2 size={13} color="#cc2b2b" />
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
       {/* Add/Edit Modal */}
-      <Modal
-        isOpen={modal}
-        onClose={() => setModal(false)}
-        title={editingUser ? "Edit Staff Member" : "Add Staff Member"}
-        size="md"
-      >
-        <form onSubmit={handleSave} className="p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Full Name"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              required
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              required
-              disabled={!!editingUser}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">Role</label>
-            <select
-              value={form.role}
-              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}
-              className="w-full border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-black"
-            >
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          {form.role === "staff" && (
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-2 flex items-center gap-1.5">
-                <Shield size={14} />
-                Permissions
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {allPermissions.map((perm) => (
-                  <label
-                    key={perm.key}
-                    className="flex items-center gap-2 cursor-pointer p-2 border-2 border-stone-200 rounded-xl hover:border-stone-400 transition-all"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.permissions.includes(perm.key)}
-                      onChange={() => togglePermission(perm.key)}
-                      className="rounded"
-                    />
-                    <span className="text-xs font-medium">{perm.label}</span>
-                  </label>
-                ))}
-              </div>
+      {modal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setModal(false)} />
+          <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 18, width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto", position: "relative", zIndex: 1 }}>
+            <div style={{ padding: "16px 20px", borderBottom: "2px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ fontWeight: 900, fontSize: 15 }}>{editUser ? "স্টাফ সম্পাদনা" : "নতুন স্টাফ যোগ করুন"}</div>
+              <button onClick={() => setModal(false)} style={{ width: 28, height: 28, border: "2px solid #1a1a1a", borderRadius: 7, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
             </div>
-          )}
-          <div className="flex gap-2 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={() => setModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1" loading={loading}>
-              {editingUser ? "Save Changes" : "Add Member"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <form onSubmit={save} style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <div style={labelStyle}>পূর্ণ নাম</div>
+                  <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={inpStyle} />
+                </div>
+                <div>
+                  <div style={labelStyle}>ইমেইল</div>
+                  <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={!!editUser} style={{ ...inpStyle, opacity: editUser ? 0.6 : 1 }} />
+                </div>
+              </div>
+              <div>
+                <div style={labelStyle}>ভূমিকা</div>
+                <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value as UserRole }))} style={inpStyle}>
+                  <option value="staff">স্টাফ</option>
+                  <option value="admin">অ্যাডমিন</option>
+                </select>
+              </div>
 
-      {/* Delete Confirm */}
-      <Modal isOpen={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Remove Staff" size="sm">
-        <div className="p-4">
-          <p className="text-sm text-stone-600 mb-4">
-            Remove <strong>{deleteConfirm?.name}</strong> from the team?
-          </p>
-          <div className="flex gap-2">
-            <Button variant="secondary" className="flex-1" onClick={() => setDeleteConfirm(null)}>
-              Cancel
-            </Button>
-            <Button variant="danger" className="flex-1" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>
-              Remove
-            </Button>
-          </div>
+              {/* Permissions — only for staff */}
+              {form.role === "staff" && (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <div style={{ ...labelStyle, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}><Shield size={13} /> অনুমতিসমূহ</div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button type="button" onClick={selectAllPerms} style={{ fontSize: 11, fontWeight: 700, color: "#1a7a5e", background: "#edfaf5", border: "1px solid #52c4a0", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>সব বেছে নিন</button>
+                      <button type="button" onClick={clearAllPerms} style={{ fontSize: 11, fontWeight: 700, color: "#cc2b2b", background: "#fff0f0", border: "1px solid #ff6b6b", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>সব বাতিল</button>
+                    </div>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    {PERMISSIONS.map(p => (
+                      <label key={p.key} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 12px", border: "1.5px solid", borderColor: form.permissions.includes(p.key) ? "#1a1a1a" : "#e2ddd7", borderRadius: 10, cursor: "pointer", background: form.permissions.includes(p.key) ? "#f5f0e8" : "#fff" }}>
+                        <input type="checkbox" checked={form.permissions.includes(p.key)} onChange={() => togglePerm(p.key)} style={{ width: 15, height: 15, marginTop: 1, flexShrink: 0, cursor: "pointer" }} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 12, color: "#1a1a1a" }}>{p.label}</div>
+                          <div style={{ fontSize: 10, color: "#a8a29e", marginTop: 1 }}>{p.desc}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
+                <button type="button" onClick={() => setModal(false)} style={{ flex: 1, padding: "11px", border: "2px solid #1a1a1a", borderRadius: 10, background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit" }}>বাতিল</button>
+                <button type="submit" disabled={loading} style={{ flex: 1, padding: "11px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>
+                  {loading ? "সংরক্ষণ..." : editUser ? "পরিবর্তন সংরক্ষণ" : "স্টাফ যোগ করুন"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
         </div>
-      </Modal>
+      )}
+
+      {/* Delete confirm */}
+      {delUser && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setDelUser(null)} />
+          <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 16, padding: 24, maxWidth: 360, width: "100%", position: "relative", zIndex: 1 }}>
+            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 8 }}>স্টাফ মুছুন</div>
+            <div style={{ fontSize: 14, color: "#6b6560", marginBottom: 20 }}><strong>{delUser.name}</strong>-কে টিম থেকে সরাবেন? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setDelUser(null)} style={{ flex: 1, padding: "11px", border: "2px solid #1a1a1a", borderRadius: 10, background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit" }}>বাতিল</button>
+              <button onClick={() => deleteUser(delUser)} style={{ flex: 1, padding: "11px", background: "#ff6b6b", color: "#fff", border: "2px solid #ff6b6b", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>সরান</button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
+
+const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 800, color: "#1a1a1a", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 };
+const inpStyle: React.CSSProperties = { width: "100%", padding: "10px 12px", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", background: "#faf9f7", boxSizing: "border-box" };
