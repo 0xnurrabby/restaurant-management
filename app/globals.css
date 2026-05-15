@@ -1,79 +1,75 @@
 @import "tailwindcss";
 
+/* =============================================
+   ZUNAYED RESTAURANT — Design System
+   Neo-Brutalism | Light | Cute | No shadow/gradient
+   ============================================= */
+
 :root {
-  --font-geist: "Geist", system-ui, sans-serif;
+  --bg:        #faf9f7;
+  --surface:   #ffffff;
+  --ink:       #1a1a1a;
+  --ink-light: #6b6560;
+  --ink-muted: #a8a29e;
+  --border:    #1a1a1a;
+  --border-sm: #e2ddd7;
 
-  /* Neo-brutalism color palette — cute, light, gender-neutral */
-  --bg: #faf9f7;
-  --surface: #ffffff;
-  --border: #1a1a1a;
-  --border-light: #e8e4de;
+  /* Accent palette */
+  --coral:  #ff6b6b;
+  --mint:   #52c4a0;
+  --amber:  #ffb347;
+  --sky:    #74b9ff;
+  --lilac:  #a29bfe;
+  --peach:  #ffd3b6;
 
-  /* Accent colors — warm & cute, not deep/dark */
-  --accent-coral: #ff6b6b;
-  --accent-mint: #52c4a0;
-  --accent-amber: #ffb347;
-  --accent-sky: #74b9ff;
-  --accent-lilac: #a29bfe;
-  --accent-peach: #ffeaa7;
-
-  /* Text */
-  --text-primary: #1a1a1a;
-  --text-secondary: #6b6560;
-  --text-muted: #a8a29e;
+  /* Accent backgrounds */
+  --coral-bg: #fff0f0;
+  --mint-bg:  #edfaf5;
+  --amber-bg: #fff8ec;
+  --sky-bg:   #edf5ff;
+  --lilac-bg: #f0eeff;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; height: 100%; }
 
 body {
-  font-family: var(--font-geist), system-ui, sans-serif;
+  font-family: var(--font-geist, system-ui, -apple-system, sans-serif);
   background: var(--bg);
-  color: var(--text-primary);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+  overflow-x: hidden;
 }
 
-/* Remove scrollbar but keep scroll */
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-sm); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-muted); }
+
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Custom border width */
-.border-3 { border-width: 3px; }
-
 /* Line clamp */
-.line-clamp-1 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
-}
-.line-clamp-2 {
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+.line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+.line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+/* Dot pattern helper */
+.dot-bg {
+  background-image: radial-gradient(circle, #d4cdc3 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
 }
 
-/* Neo-brutalism card style */
-.nb-card {
-  background: #fff;
-  border: 2px solid #1a1a1a;
-  border-radius: 16px;
-}
+/* Spin animation */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin { animation: spin 0.8s linear infinite; }
 
-/* Smooth page transitions */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.fade-up {
-  animation: fadeUp 0.25s ease both;
-}
+/* Fade up */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.28s ease both; }
+
+/* Pulse */
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+.animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }

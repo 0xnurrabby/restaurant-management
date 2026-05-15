@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, ShoppingCart, UtensilsCrossed, Grid3X3,
-  Package, Users, BarChart3, Bell, Settings, ChefHat,
-  LogOut, Menu, X, Layers,
+  LayoutDashboard, ShoppingCart, UtensilsCrossed,
+  Grid3X3, Package, Users, BarChart3, Bell,
+  Settings, ChefHat, LogOut, Menu as MenuIcon, X, Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -17,91 +17,116 @@ interface SidebarProps {
   restaurantName?: string;
 }
 
-const allNavItems = [
-  { href: "/admin",               label: "Dashboard",    icon: LayoutDashboard,  permission: null,        color: "text-[#1a1a1a]",  activeBg: "bg-[#1a1a1a]" },
-  { href: "/admin/pos",           label: "POS",          icon: ShoppingCart,     permission: "pos",       color: "text-[#ff6b6b]",  activeBg: "bg-[#ff6b6b]" },
-  { href: "/admin/orders",        label: "Orders",       icon: UtensilsCrossed,  permission: null,        color: "text-[#ffb347]",  activeBg: "bg-[#ffb347]" },
-  { href: "/admin/tables",        label: "Tables",       icon: Grid3X3,          permission: "tables",    color: "text-[#74b9ff]",  activeBg: "bg-[#74b9ff]" },
-  { href: "/admin/kds",           label: "Kitchen",      icon: ChefHat,          permission: "kds",       color: "text-[#52c4a0]",  activeBg: "bg-[#52c4a0]" },
-  { href: "/admin/menu",          label: "Menu",         icon: Layers,           permission: "menu",      color: "text-[#a29bfe]",  activeBg: "bg-[#a29bfe]" },
-  { href: "/admin/inventory",     label: "Inventory",    icon: Package,          permission: "inventory", color: "text-[#fd79a8]",  activeBg: "bg-[#fd79a8]" },
-  { href: "/admin/staff",         label: "Staff",        icon: Users,            permission: "staff",     color: "text-[#1a1a1a]",  activeBg: "bg-[#1a1a1a]" },
-  { href: "/admin/reports",       label: "Reports",      icon: BarChart3,        permission: "reports",   color: "text-[#ffb347]",  activeBg: "bg-[#ffb347]" },
-  { href: "/admin/notifications", label: "Alerts",       icon: Bell,             permission: null,        color: "text-[#ff6b6b]",  activeBg: "bg-[#ff6b6b]" },
-  { href: "/admin/settings",      label: "Settings",     icon: Settings,         permission: "settings",  color: "text-[#6b6560]",  activeBg: "bg-[#6b6560]" },
+const NAV = [
+  { href: "/admin",               label: "Dashboard",  icon: LayoutDashboard, perm: null,        dot: "#ff6b6b" },
+  { href: "/admin/pos",           label: "POS",        icon: ShoppingCart,    perm: "pos",        dot: "#ff6b6b" },
+  { href: "/admin/orders",        label: "Orders",     icon: UtensilsCrossed, perm: null,         dot: "#ffb347" },
+  { href: "/admin/tables",        label: "Tables",     icon: Grid3X3,         perm: "tables",     dot: "#74b9ff" },
+  { href: "/admin/kds",           label: "Kitchen",    icon: ChefHat,         perm: "kds",        dot: "#52c4a0" },
+  { href: "/admin/menu",          label: "Menu",       icon: Layers,          perm: "menu",       dot: "#a29bfe" },
+  { href: "/admin/inventory",     label: "Inventory",  icon: Package,         perm: "inventory",  dot: "#fd79a8" },
+  { href: "/admin/staff",         label: "Staff",      icon: Users,           perm: "staff",      dot: "#ffb347" },
+  { href: "/admin/reports",       label: "Reports",    icon: BarChart3,       perm: "reports",    dot: "#52c4a0" },
+  { href: "/admin/notifications", label: "Alerts",     icon: Bell,            perm: null,         dot: "#ff6b6b" },
+  { href: "/admin/settings",      label: "Settings",   icon: Settings,        perm: "settings",   dot: "#a8a29e" },
 ];
+
+function NavLinks({ session, pathname, onClose }: { session: Session; pathname: string; onClose?: () => void }) {
+  const items = NAV.filter(item => {
+    if (!item.perm) return true;
+    if (session.role === "main_admin" || session.role === "admin") return true;
+    return session.permissions.includes(item.perm as never);
+  });
+
+  return (
+    <div style={{ padding: "8px 10px", flex: 1, overflowY: "auto" }}>
+      {items.map((item) => {
+        const exact = item.href === "/admin";
+        const active = exact ? pathname === "/admin" : pathname.startsWith(item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onClose}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "9px 12px",
+              borderRadius: 10,
+              marginBottom: 2,
+              fontWeight: 700,
+              fontSize: 13,
+              textDecoration: "none",
+              border: "2px solid",
+              borderColor: active ? "#1a1a1a" : "transparent",
+              background: active ? "#1a1a1a" : "transparent",
+              color: active ? "#fff" : "#6b6560",
+              transition: "all 0.12s ease",
+            }}
+            onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "#f5f0e8"; (e.currentTarget as HTMLElement).style.color = "#1a1a1a"; (e.currentTarget as HTMLElement).style.borderColor = "#1a1a1a"; } }}
+            onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#6b6560"; (e.currentTarget as HTMLElement).style.borderColor = "transparent"; } }}
+          >
+            {/* Dot */}
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: active ? "#fff" : item.dot, border: "1.5px solid", borderColor: active ? "rgba(255,255,255,0.4)" : "#1a1a1a", flexShrink: 0 }} />
+            <item.icon size={15} style={{ flexShrink: 0 }} />
+            {item.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
 
 export function Sidebar({ session, restaurantName = "Zunayed" }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const navItems = allNavItems.filter((item) => {
-    if (!item.permission) return true;
-    if (session.role === "main_admin" || session.role === "admin") return true;
-    return session.permissions.includes(item.permission as never);
-  });
+  const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
 
-  const NavContent = () => (
-    <div className="flex flex-col h-full bg-[#faf9f7]">
+  const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#faf9f7" }}>
       {/* Logo */}
-      <div className="p-4 border-b-2 border-[#1a1a1a]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-[#ff6b6b] border-2 border-[#1a1a1a] rounded-xl flex items-center justify-center shrink-0">
-            <ChefHat size={16} className="text-white" />
+      <div style={{ padding: "18px 16px 14px", borderBottom: "2px solid #1a1a1a" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 36, height: 36, background: "#ff6b6b", border: "2px solid #1a1a1a", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>
+            🍽️
           </div>
-          <div className="min-w-0">
-            <p className="font-black text-sm text-[#1a1a1a] truncate leading-none">{restaurantName}</p>
-            <p className="text-[10px] text-[#a8a29e] font-semibold uppercase tracking-wide mt-0.5 capitalize">
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 900, fontSize: 13, color: "#1a1a1a", lineHeight: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {restaurantName}
+            </div>
+            <div style={{ fontSize: 10, color: "#a8a29e", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>
               {session.role.replace("_", " ")}
-            </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Nav items */}
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = item.href === "/admin"
-            ? pathname === "/admin"
-            : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 border-2",
-                isActive
-                  ? `${item.activeBg} text-white border-[#1a1a1a]`
-                  : "text-[#6b6560] border-transparent hover:bg-white hover:border-[#1a1a1a] hover:text-[#1a1a1a]"
-              )}
-            >
-              <item.icon size={15} className={isActive ? "text-white" : item.color} />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Nav */}
+      <NavLinks session={session} pathname={pathname} onClose={onClose} />
 
-      {/* User */}
-      <div className="p-3 border-t-2 border-[#1a1a1a]">
-        <div className="flex items-center gap-2 px-3 py-2 mb-1 bg-white border-2 border-[#e8e4de] rounded-xl">
-          <div className="w-7 h-7 bg-[#ff6b6b] border-2 border-[#1a1a1a] rounded-lg flex items-center justify-center text-xs font-black text-white shrink-0">
+      {/* User + logout */}
+      <div style={{ padding: "10px", borderTop: "2px solid #1a1a1a" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "#fff", border: "2px solid #e2ddd7", borderRadius: 10, marginBottom: 6 }}>
+          <div style={{ width: 28, height: 28, background: "#ff6b6b", border: "2px solid #1a1a1a", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12, color: "#fff", flexShrink: 0 }}>
             {session.email[0].toUpperCase()}
           </div>
-          <p className="text-xs font-semibold text-[#1a1a1a] truncate flex-1">{session.email}</p>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#1a1a1a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {session.email}
+          </div>
         </div>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#cc2b2b] hover:bg-[#ffe4e4] hover:border-[#ff6b6b] border-2 border-transparent transition-all w-full"
+          style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "2px solid transparent", background: "transparent", cursor: "pointer", fontWeight: 700, fontSize: 13, color: "#cc2b2b", transition: "all 0.12s ease" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#fff0f0"; (e.currentTarget as HTMLElement).style.borderColor = "#ff6b6b"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.borderColor = "transparent"; }}
         >
-          <LogOut size={15} />
+          <LogOut size={14} />
           Logout
         </button>
       </div>
@@ -111,53 +136,43 @@ export function Sidebar({ session, restaurantName = "Zunayed" }: SidebarProps) {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden lg:flex flex-col w-56 border-r-2 border-[#1a1a1a] h-screen sticky top-0 shrink-0">
-        <NavContent />
+      <div style={{ width: 210, flexShrink: 0, borderRight: "2px solid #1a1a1a", height: "100vh", position: "sticky", top: 0, display: "flex", flexDirection: "column" }} className="hidden lg:flex">
+        <SidebarContent />
       </div>
 
-      {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b-2 border-[#1a1a1a] px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#ff6b6b] border-2 border-[#1a1a1a] rounded-xl flex items-center justify-center">
-            <ChefHat size={14} className="text-white" />
-          </div>
-          <span className="font-black text-sm text-[#1a1a1a]">{restaurantName}</span>
+      {/* Mobile topbar */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 40, background: "#fff", borderBottom: "2px solid #1a1a1a", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }} className="lg:hidden">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, background: "#ff6b6b", border: "2px solid #1a1a1a", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🍽️</div>
+          <span style={{ fontWeight: 900, fontSize: 14, color: "#1a1a1a" }}>{restaurantName}</span>
         </div>
         <button
-          onClick={() => setMobileOpen(true)}
-          className="p-2 hover:bg-[#f5f0e8] rounded-xl border-2 border-transparent hover:border-[#1a1a1a] transition-all"
+          onClick={() => setOpen(true)}
+          style={{ width: 36, height: 36, background: "#f5f0e8", border: "2px solid #1a1a1a", borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
         >
-          <Menu size={18} />
+          <MenuIcon size={17} />
         </button>
       </div>
 
       {/* Mobile drawer */}
       <AnimatePresence>
-        {mobileOpen && (
+        {open && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#1a1a1a]/40 z-50 lg:hidden"
-              onClick={() => setMobileOpen(false)}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: "fixed", inset: 0, background: "rgba(26,26,26,0.45)", zIndex: 50 }}
+              onClick={() => setOpen(false)}
             />
             <motion.div
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ type: "spring", damping: 28, stiffness: 250 }}
-              className="fixed left-0 top-0 bottom-0 w-60 border-r-2 border-[#1a1a1a] z-50 lg:hidden"
+              initial={{ x: -230 }} animate={{ x: 0 }} exit={{ x: -230 }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              style={{ position: "fixed", left: 0, top: 0, bottom: 0, width: 220, borderRight: "2px solid #1a1a1a", zIndex: 51, display: "flex", flexDirection: "column" }}
+              className="lg:hidden"
             >
-              <div className="absolute top-3 right-3 z-10">
-                <button
-                  onClick={() => setMobileOpen(false)}
-                  className="p-1.5 bg-white hover:bg-[#f5f0e8] rounded-lg border-2 border-[#1a1a1a]"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <NavContent />
+              <button onClick={() => setOpen(false)}
+                style={{ position: "absolute", top: 12, right: 12, zIndex: 1, width: 28, height: 28, background: "#fff", border: "2px solid #1a1a1a", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <X size={13} />
+              </button>
+              <SidebarContent onClose={() => setOpen(false)} />
             </motion.div>
           </>
         )}
