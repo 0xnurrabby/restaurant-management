@@ -73,7 +73,7 @@ export default function ReportsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard title="This Week" value="$6,600" icon={<DollarSign size={16} />} color="green" />
+        <StatCard title="This Week" value="$6,600" icon={<DollarSign size={16} />} color="mint" />
         <StatCard title="Total Orders" value="237" icon={<ShoppingCart size={16} />} />
         <StatCard title="Avg Order Value" icon={<TrendingUp size={16} />} value="$27.85" />
         <StatCard title="Avg Prep Time" value="14 min" icon={<Clock size={16} />} />

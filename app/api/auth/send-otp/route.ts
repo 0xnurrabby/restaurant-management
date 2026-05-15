@@ -19,9 +19,8 @@ export async function POST(req: NextRequest) {
     }
 
     const redis = getRedis();
-
-    // Check if user exists or is main admin
     const mainAdmin = isMainAdmin(email);
+
     if (!mainAdmin) {
       const rawUser = await redis.get(KEYS.user(email));
       if (!rawUser) {
@@ -33,35 +32,44 @@ export async function POST(req: NextRequest) {
     }
 
     const otp = generateOTP();
-    await redis.setex(KEYS.otp(email), 10 * 60, otp); // 10 min expiry
+    // Store OTP — expires in 10 minutes
+    await redis.setex(KEYS.otp(email), 600, otp);
 
-    // Send OTP via Resend
-    const settings = await redis.get(KEYS.settings);
-    const restaurantName =
-      (settings as { name?: string })?.name || "Restaurant";
+    // Get restaurant name from settings (fallback gracefully)
+    let restaurantName = "Zunayed Restaurant";
+    try {
+      const settings = await redis.get(KEYS.settings);
+      if (settings) {
+        const parsed = typeof settings === "string" ? JSON.parse(settings) : settings as { name?: string };
+        if (parsed?.name) restaurantName = parsed.name;
+      }
+    } catch {
+      // use default name
+    }
 
     const resend = getResend();
     await resend.emails.send({
-      from: `${restaurantName} <noreply@resend.dev>`,
+      from: `${restaurantName} <onboarding@resend.dev>`,
       to: email,
-      subject: `Your Login OTP - ${restaurantName}`,
+      subject: `Your Login OTP — ${otp}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; border: 2px solid #000; border-radius: 12px;">
-          <h2 style="margin: 0 0 16px; font-size: 24px;">${restaurantName}</h2>
-          <p style="color: #555; margin: 0 0 24px;">Your one-time login code is:</p>
-          <div style="background: #f5f5f5; border: 2px solid #000; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 24px;">
-            <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px;">${otp}</span>
+        <div style="font-family: 'Inter', Arial, sans-serif; max-width: 420px; margin: 0 auto; padding: 32px 24px; background: #fff; border: 2px solid #000; border-radius: 16px;">
+          <h2 style="margin: 0 0 8px; font-size: 22px; font-weight: 800; color: #000;">${restaurantName}</h2>
+          <p style="color: #666; margin: 0 0 28px; font-size: 14px;">Staff & Admin Portal</p>
+          <p style="color: #333; margin: 0 0 16px; font-size: 15px;">Your one-time login code:</p>
+          <div style="background: #f5f5f4; border: 2px solid #000; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 24px;">
+            <span style="font-size: 40px; font-weight: 900; letter-spacing: 10px; color: #000; font-family: monospace;">${otp}</span>
           </div>
-          <p style="color: #888; font-size: 14px; margin: 0;">This code expires in 10 minutes. Do not share it with anyone.</p>
+          <p style="color: #999; font-size: 13px; margin: 0;">Expires in <strong>10 minutes</strong>. Do not share this code.</p>
         </div>
       `,
     });
 
-    return NextResponse.json({ success: true, message: "OTP sent" });
+    return NextResponse.json({ success: true, message: "OTP sent to " + email });
   } catch (error) {
     console.error("Send OTP error:", error);
     return NextResponse.json(
-      { error: "Failed to send OTP" },
+      { error: "Failed to send OTP. Please try again." },
       { status: 500 }
     );
   }

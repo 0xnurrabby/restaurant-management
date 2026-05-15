@@ -13,21 +13,9 @@ interface ModalProps {
   className?: string;
 }
 
-const sizes = {
-  sm: "max-w-sm",
-  md: "max-w-md",
-  lg: "max-w-lg",
-  xl: "max-w-2xl",
-};
+const sizes = { sm: "max-w-sm", md: "max-w-md", lg: "max-w-lg", xl: "max-w-2xl" };
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  size = "md",
-  className,
-}: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = "md", className }: ModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -36,29 +24,30 @@ export function Modal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-[#1a1a1a]/40 z-50"
             onClick={onClose}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              initial={{ opacity: 0, scale: 0.93, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 8 }}
-              transition={{ duration: 0.15 }}
+              exit={{ opacity: 0, scale: 0.93, y: 12 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
               className={cn(
-                "bg-white border-2 border-black rounded-2xl w-full",
+                "bg-white border-2 border-[#1a1a1a] rounded-2xl w-full pointer-events-auto",
                 sizes[size],
                 className
               )}
             >
               {title && (
-                <div className="flex items-center justify-between p-4 border-b-2 border-stone-100">
-                  <h2 className="text-base font-semibold">{title}</h2>
+                <div className="flex items-center justify-between px-5 py-4 border-b-2 border-[#1a1a1a]">
+                  <h2 className="text-sm font-bold tracking-tight">{title}</h2>
                   <button
                     onClick={onClose}
-                    className="p-1.5 hover:bg-stone-100 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-[#f5f0e8] rounded-lg transition-colors border border-transparent hover:border-[#1a1a1a]"
                   >
-                    <X size={16} />
+                    <X size={15} />
                   </button>
                 </div>
               )}
@@ -66,9 +55,9 @@ export function Modal({
                 {!title && (
                   <button
                     onClick={onClose}
-                    className="absolute top-3 right-3 p-1.5 hover:bg-stone-100 rounded-lg transition-colors z-10"
+                    className="absolute top-3 right-3 p-1.5 hover:bg-[#f5f0e8] rounded-lg transition-colors z-10 border border-transparent hover:border-[#1a1a1a]"
                   >
-                    <X size={16} />
+                    <X size={15} />
                   </button>
                 )}
                 {children}
