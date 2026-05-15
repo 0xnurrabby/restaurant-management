@@ -2,180 +2,130 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Modal } from "@/components/ui/modal";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { Table, Floor, TableStatus } from "@/lib/types";
-import { Grid3X3 } from "lucide-react";
 
-interface TablesClientProps {
-  initialTables: Table[];
-  initialFloors: Floor[];
-}
-
-const statusColors: Record<TableStatus, string> = {
-  available: "bg-green-50 border-green-300 text-green-700",
-  occupied: "bg-red-50 border-red-300 text-red-700",
-  reserved: "bg-amber-50 border-amber-300 text-amber-700",
-  cleaning: "bg-blue-50 border-blue-300 text-blue-700",
+const STATUS_STYLE: Record<TableStatus, { bg: string; border: string; color: string }> = {
+  available: { bg: "#edfaf5", border: "#52c4a0", color: "#1a7a5e" },
+  occupied:  { bg: "#fff0f0", border: "#ff6b6b", color: "#cc2b2b" },
+  reserved:  { bg: "#fff8ec", border: "#ffb347", color: "#8a6200" },
+  cleaning:  { bg: "#edf5ff", border: "#74b9ff", color: "#1a5fa8" },
 };
+const STATUSES: TableStatus[] = ["available", "occupied", "reserved", "cleaning"];
 
-const statusVariant: Record<TableStatus, "default" | "success" | "warning" | "danger" | "info"> = {
-  available: "success",
-  occupied: "danger",
-  reserved: "warning",
-  cleaning: "info",
-};
-
-const statuses: TableStatus[] = ["available", "occupied", "reserved", "cleaning"];
-
-export function TablesClient({ initialTables, initialFloors }: TablesClientProps) {
+export function TablesClient({ initialTables, initialFloors }: { initialTables: Table[]; initialFloors: Floor[] }) {
   const [tables, setTables] = useState(initialTables);
   const [floors] = useState(initialFloors);
   const [selectedFloor, setSelectedFloor] = useState(floors[0]?.id || "");
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
-  const [statusModal, setStatusModal] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const floorTables = tables.filter((t) => t.floorId === selectedFloor);
+  const floorTables = tables.filter(t => t.floorId === selectedFloor);
+  const stats = {
+    available: tables.filter(t => t.status === "available").length,
+    occupied:  tables.filter(t => t.status === "occupied").length,
+    reserved:  tables.filter(t => t.status === "reserved").length,
+    cleaning:  tables.filter(t => t.status === "cleaning").length,
+  };
 
-  const handleStatusChange = async (status: TableStatus) => {
+  const changeStatus = async (status: TableStatus) => {
     if (!selectedTable) return;
     setUpdating(true);
     try {
-      const res = await fetch(`/api/tables/${selectedTable.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
+      const res = await fetch(`/api/tables/${selectedTable.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
       if (res.ok) {
-        setTables((prev) =>
-          prev.map((t) =>
-            t.id === selectedTable.id ? { ...t, status } : t
-          )
-        );
-        setSelectedTable((prev) => prev ? { ...prev, status } : null);
+        setTables(prev => prev.map(t => t.id === selectedTable.id ? { ...t, status } : t));
+        setSelectedTable(prev => prev ? { ...prev, status } : null);
       }
-    } finally {
-      setUpdating(false);
-      setStatusModal(false);
-    }
-  };
-
-  const stats = {
-    available: tables.filter((t) => t.status === "available").length,
-    occupied: tables.filter((t) => t.status === "occupied").length,
-    reserved: tables.filter((t) => t.status === "reserved").length,
-    cleaning: tables.filter((t) => t.status === "cleaning").length,
+    } finally { setUpdating(false); }
   };
 
   return (
     <div>
-      <PageHeader
-        title="Table Management"
-        description="Monitor and manage restaurant tables"
-      />
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
-        {statuses.map((s) => (
-          <div
-            key={s}
-            className={`p-3 border-2 rounded-xl text-center ${statusColors[s]}`}
-          >
-            <p className="text-lg font-bold">{stats[s]}</p>
-            <p className="text-xs capitalize">{s}</p>
-          </div>
-        ))}
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>Table Management</h1>
+        <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>Monitor and manage restaurant tables</p>
       </div>
 
-      {/* Floor Tabs */}
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
+        {STATUSES.map(s => {
+          const st = STATUS_STYLE[s];
+          return (
+            <div key={s} style={{ background: st.bg, border: `2px solid ${st.border}`, padding: "14px 16px", textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a" }}>{stats[s]}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: st.color, textTransform: "capitalize", marginTop: 4 }}>{s}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Floor tabs */}
       {floors.length > 0 ? (
         <>
-          <div className="flex gap-2 mb-4">
-            {floors.map((floor) => (
-              <button
-                key={floor.id}
-                onClick={() => setSelectedFloor(floor.id)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium border-2 transition-all ${
-                  selectedFloor === floor.id
-                    ? "bg-black text-white border-black"
-                    : "bg-white border-stone-200 text-stone-600 hover:border-black"
-                }`}
-              >
+          <div style={{ display: "flex", gap: 0, marginBottom: 16, border: "2px solid #1a1a1a", width: "fit-content" }}>
+            {floors.map((floor, i) => (
+              <button key={floor.id} onClick={() => setSelectedFloor(floor.id)}
+                style={{ padding: "8px 18px", fontSize: 13, fontWeight: 700, border: "none", borderRight: i < floors.length - 1 ? "1px solid #e2ddd7" : "none", background: selectedFloor === floor.id ? "#1a1a1a" : "#fff", color: selectedFloor === floor.id ? "#fff" : "#6b6560", cursor: "pointer" }}>
                 {floor.name}
               </button>
             ))}
           </div>
 
-          {/* Table Grid */}
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-            {floorTables.map((table, i) => (
-              <motion.button
-                key={table.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.03 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => {
-                  setSelectedTable(table);
-                  setStatusModal(true);
-                }}
-                className={`aspect-square border-2 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all ${statusColors[table.status]}`}
-              >
-                <span className="text-base font-bold">{table.number}</span>
-                <span className="text-[10px] opacity-70">{table.capacity}p</span>
-                <Badge variant={statusVariant[table.status]} className="text-[10px]">
-                  {table.status}
-                </Badge>
-              </motion.button>
-            ))}
+          {/* Table grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(90px, 1fr))", gap: 8 }}>
+            {floorTables.map((table, i) => {
+              const st = STATUS_STYLE[table.status];
+              return (
+                <motion.button key={table.id} whileTap={{ scale: 0.96 }} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}
+                  onClick={() => setSelectedTable(table)}
+                  style={{ aspectRatio: "1", border: `2px solid ${st.border}`, background: st.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, cursor: "pointer" }}>
+                  <span style={{ fontWeight: 900, fontSize: 16, color: "#1a1a1a" }}>{table.number}</span>
+                  <span style={{ fontSize: 10, color: "#6b6560", fontWeight: 600 }}>{table.capacity}p</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, padding: "1px 6px", border: `1px solid ${st.border}`, background: "#fff", color: st.color, textTransform: "capitalize" }}>{table.status}</span>
+                </motion.button>
+              );
+            })}
           </div>
         </>
       ) : (
-        <EmptyState
-          icon={<Grid3X3 size={24} />}
-          title="No tables configured"
-          description="Seed sample data to see tables"
-        />
+        <div style={{ textAlign: "center", padding: "60px 0", border: "2px solid #1a1a1a", background: "#fff" }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "#1a1a1a", marginBottom: 6 }}>No tables configured</div>
+          <div style={{ fontSize: 13, color: "#a8a29e" }}>Go to Settings → Seed Sample Data to add tables</div>
+        </div>
       )}
 
-      {/* Status Update Modal */}
-      <Modal
-        isOpen={statusModal}
-        onClose={() => setStatusModal(false)}
-        title={`Table ${selectedTable?.number}`}
-        size="sm"
-      >
-        {selectedTable && (
-          <div className="p-4">
-            <p className="text-sm text-stone-600 mb-4">
-              Capacity: {selectedTable.capacity} | Current:{" "}
-              <Badge variant={statusVariant[selectedTable.status]}>
-                {selectedTable.status}
-              </Badge>
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {statuses.map((status) => (
-                <button
-                  key={status}
-                  onClick={() => handleStatusChange(status)}
-                  disabled={updating}
-                  className={`p-3 border-2 rounded-xl text-sm font-medium capitalize transition-all ${
-                    selectedTable.status === status
-                      ? statusColors[status]
-                      : "border-stone-200 hover:border-stone-400"
-                  } ${updating ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  {status}
-                </button>
-              ))}
+      {/* Status change modal */}
+      {selectedTable && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setSelectedTable(null)} />
+          <motion.div initial={{ scale: 0.93, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            style={{ background: "#fff", border: "2px solid #1a1a1a", width: "100%", maxWidth: 320, position: "relative", zIndex: 1 }}>
+            <div style={{ padding: "14px 18px", borderBottom: "2px solid #1a1a1a" }}>
+              <div style={{ fontWeight: 900, fontSize: 15 }}>Table {selectedTable.number}</div>
+              <div style={{ fontSize: 12, color: "#a8a29e", fontWeight: 600, marginTop: 2 }}>Capacity: {selectedTable.capacity} · Status: <span style={{ textTransform: "capitalize", color: "#1a1a1a" }}>{selectedTable.status}</span></div>
             </div>
-          </div>
-        )}
-      </Modal>
+            <div style={{ padding: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#a8a29e", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 10 }}>Change Status</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                {STATUSES.map(status => {
+                  const st = STATUS_STYLE[status];
+                  const active = selectedTable.status === status;
+                  return (
+                    <button key={status} onClick={() => changeStatus(status)} disabled={updating || active}
+                      style={{ padding: "10px", border: `2px solid ${active ? st.border : "#e2ddd7"}`, background: active ? st.bg : "#faf9f7", color: active ? st.color : "#6b6560", cursor: active || updating ? "default" : "pointer", fontWeight: 700, fontSize: 12, textTransform: "capitalize", fontFamily: "inherit", opacity: updating ? 0.6 : 1 }}>
+                      {status}
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={() => setSelectedTable(null)} style={{ width: "100%", marginTop: 10, padding: "9px", border: "2px solid #1a1a1a", background: "#fff", cursor: "pointer", fontSize: 12, fontWeight: 700, fontFamily: "inherit" }}>
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

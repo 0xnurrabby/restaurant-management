@@ -2,7 +2,7 @@
 
 /* =============================================
    ZUNAYED RESTAURANT — Design System
-   Neo-Brutalism | Light | Cute | No shadow/gradient
+   Neo-Brutalism | Sharp Corners | No radius
    ============================================= */
 
 :root {
@@ -14,15 +14,12 @@
   --border:    #1a1a1a;
   --border-sm: #e2ddd7;
 
-  /* Accent palette */
   --coral:  #ff6b6b;
   --mint:   #52c4a0;
   --amber:  #ffb347;
   --sky:    #74b9ff;
   --lilac:  #a29bfe;
-  --peach:  #ffd3b6;
 
-  /* Accent backgrounds */
   --coral-bg: #fff0f0;
   --mint-bg:  #edfaf5;
   --amber-bg: #fff8ec;
@@ -30,7 +27,14 @@
   --lilac-bg: #f0eeff;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* SHARP CORNERS EVERYWHERE — override any inline border-radius */
+  border-radius: 0 !important;
+}
+
 html { scroll-behavior: smooth; height: 100%; }
 
 body {
@@ -43,9 +47,9 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-sm); border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: var(--border-sm); }
 ::-webkit-scrollbar-thumb:hover { background: var(--ink-muted); }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -54,22 +58,18 @@ body {
 /* Line clamp */
 .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
 .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.line-clamp-3 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-
-/* Dot pattern helper */
-.dot-bg {
-  background-image: radial-gradient(circle, #d4cdc3 1.2px, transparent 1.2px);
-  background-size: 22px 22px;
-}
 
 /* Spin animation */
 @keyframes spin { to { transform: rotate(360deg); } }
 .animate-spin { animation: spin 0.8s linear infinite; }
 
-/* Fade up */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-.fade-up { animation: fadeUp 0.28s ease both; }
-
 /* Pulse */
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
 .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+
+/* Mobile admin padding — ensure content not hidden behind floating menu button */
+@media (max-width: 1023px) {
+  .admin-main-content {
+    padding-top: 60px !important;
+  }
+}

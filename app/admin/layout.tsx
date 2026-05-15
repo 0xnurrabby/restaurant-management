@@ -25,12 +25,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#faf9f7" }}>
       <NavProgress />
       <Sidebar session={session} restaurantName={restaurantName} />
-      <main style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden" }}>
-        <div style={{ padding: "28px" }}>
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </div>
+      <main
+        className="admin-main-content"
+        style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden", padding: "28px" }}
+      >
+        <PageTransition>
+          {children}
+        </PageTransition>
       </main>
     </div>
   );

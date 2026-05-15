@@ -12,10 +12,13 @@ export async function POST() {
   try {
     const redis = getRedis();
 
-    // Seed settings
+    // Always re-seed settings
     await redis.set(KEYS.settings, JSON.stringify(defaultSettings));
 
-    // Seed categories
+    // Re-seed categories (clear old ones first)
+    const oldCatIds = (await redis.get(KEYS.categories) as string[]) || [];
+    for (const id of oldCatIds) await redis.del(KEYS.category(id));
+
     const catIds: string[] = [];
     for (const cat of seedCategories) {
       await redis.set(KEYS.category(cat.id), JSON.stringify(cat));
@@ -23,7 +26,10 @@ export async function POST() {
     }
     await redis.set(KEYS.categories, catIds);
 
-    // Seed menu items
+    // Re-seed menu items (clear old ones)
+    const oldItemIds = (await redis.get(KEYS.menuItems) as string[]) || [];
+    for (const id of oldItemIds) await redis.del(KEYS.menuItem(id));
+
     const menuItems = createSeedMenuItems(seedCategories);
     const itemIds: string[] = [];
     for (const item of menuItems) {
@@ -32,7 +38,12 @@ export async function POST() {
     }
     await redis.set(KEYS.menuItems, itemIds);
 
-    // Seed floors and tables
+    // Re-seed floors + tables (clear old)
+    const oldFloorIds = (await redis.get(KEYS.floors) as string[]) || [];
+    for (const id of oldFloorIds) await redis.del(KEYS.floor(id));
+    const oldTableIds = (await redis.get(KEYS.tables) as string[]) || [];
+    for (const id of oldTableIds) await redis.del(KEYS.table(id));
+
     const { floors, tables } = createSeedFloors();
     const floorIds: string[] = [];
     for (const floor of floors) {
@@ -48,13 +59,16 @@ export async function POST() {
     }
     await redis.set(KEYS.tables, tableIds);
 
-    // Seed inventory
-    const inventoryIds: string[] = [];
+    // Re-seed inventory
+    const oldInvIds = (await redis.get(KEYS.inventory) as string[]) || [];
+    for (const id of oldInvIds) await redis.del(KEYS.inventoryItem(id));
+
+    const invIds: string[] = [];
     for (const item of seedInventory) {
       await redis.set(KEYS.inventoryItem(item.id), JSON.stringify(item));
-      inventoryIds.push(item.id);
+      invIds.push(item.id);
     }
-    await redis.set(KEYS.inventory, inventoryIds);
+    await redis.set(KEYS.inventory, invIds);
 
     return NextResponse.json({
       success: true,
@@ -63,7 +77,7 @@ export async function POST() {
         menuItems: itemIds.length,
         floors: floorIds.length,
         tables: tableIds.length,
-        inventory: inventoryIds.length,
+        inventory: invIds.length,
       },
     });
   } catch (error) {
