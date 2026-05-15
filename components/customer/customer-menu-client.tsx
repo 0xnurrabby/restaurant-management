@@ -210,11 +210,11 @@ export function CustomerMenuClient({ categories, items, settings }: Props) {
 
                   <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#a8a29e", fontWeight: 600 }}>
-                      <Clock size={13} />{selectedItem.preparationTime} মিনিট
+                      <Clock size={13} />{selectedItem.preparationTime} min
                     </div>
                     {selectedItem.calories && (
                       <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#a8a29e", fontWeight: 600 }}>
-                        <Zap size={13} />{selectedItem.calories} ক্যালরি
+                        <Zap size={13} />{selectedItem.calories} cal
                       </div>
                     )}
                   </div>
@@ -325,7 +325,7 @@ export function CustomerMenuClient({ categories, items, settings }: Props) {
                 style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 20, padding: 40, maxWidth: 380, width: "100%", textAlign: "center" }}>
                 <div style={{ width: 64, height: 64, background: "#edfaf5", border: "2px solid #1a1a1a", borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 20px" }}>✓</div>
                 <h2 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", marginBottom: 8 }}>Order Placed!</h2>
-                <p style={{ fontSize: 14, color: "#6b6560", marginBottom: 24, fontWeight: 500 }}>আপনার অর্ডার রান্নাঘরে পাঠানো হয়েছে। অল্প কিছুক্ষণের মধ্যে প্রস্তুত হবে!</p>
+                <p style={{ fontSize: 14, color: "#6b6560", marginBottom: 24, fontWeight: 500 }}>Your order has been sent to the kitchen. It will be ready shortly!</p>
                 <button onClick={() => setOrderSuccess(false)} style={{ width: "100%", padding: "13px 20px", background: "#ff6b6b", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "inherit" }}>
                   Continue Ordering
                 </button>

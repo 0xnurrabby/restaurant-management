@@ -7,17 +7,17 @@ import { formatDate } from "@/lib/utils";
 import { Plus, Pencil, Trash2, X, Shield, Clock, CheckCircle, XCircle } from "lucide-react";
 
 const PERMISSIONS: { key: StaffPermission; label: string; desc: string }[] = [
-  { key: "pos", label: "POS সিস্টেম", desc: "অর্ডার তৈরি ও পেমেন্ট" },
-  { key: "kitchen", label: "রান্নাঘর", desc: "রান্নার অর্ডার দেখা" },
-  { key: "kds", label: "KDS ডিসপ্লে", desc: "Kitchen Display System" },
-  { key: "tables", label: "টেবিল ব্যবস্থাপনা", desc: "টেবিল স্ট্যাটাস পরিবর্তন" },
-  { key: "menu", label: "মেনু", desc: "মেনু আইটেম পরিচালনা" },
-  { key: "inventory", label: "ইনভেন্টরি", desc: "স্টক আপডেট করা" },
-  { key: "reports", label: "রিপোর্ট", desc: "সেলস রিপোর্ট দেখা" },
-  { key: "billing", label: "বিলিং", desc: "বিল তৈরি ও পরিশোধ" },
-  { key: "staff", label: "স্টাফ", desc: "স্টাফ দেখা ও পরিচালনা" },
-  { key: "settings", label: "সেটিংস", desc: "রেস্তোরাঁ সেটিংস" },
-  { key: "notifications", label: "নোটিফিকেশন", desc: "সব নোটিফিকেশন দেখা" },
+  { key: "pos", label: "POS System", desc: "Create orders & process payments" },
+  { key: "kitchen", label: "Kitchen", desc: "View kitchen orders" },
+  { key: "kds", label: "KDS Display", desc: "Kitchen Display System" },
+  { key: "tables", label: "Table Management", desc: "Change table status" },
+  { key: "menu", label: "Menu", desc: "Manage menu items" },
+  { key: "inventory", label: "Inventory", desc: "Update stock levels" },
+  { key: "reports", label: "Reports", desc: "View sales reports" },
+  { key: "billing", label: "Billing", desc: "Create & process bills" },
+  { key: "staff", label: "Staff", desc: "View & manage staff" },
+  { key: "settings", label: "Settings", desc: "Restaurant settings" },
+  { key: "notifications", label: "Notifications", desc: "View all notifications" },
 ];
 
 const ROLE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
@@ -75,12 +75,12 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>স্টাফ ম্যানেজমেন্ট</h1>
-          <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>টিম সদস্য ও অনুমতি পরিচালনা করুন</p>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>Staff Management</h1>
+          <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>Manage team members and permissions</p>
         </div>
         {currentRole === "main_admin" && (
           <button onClick={openAdd} style={{ padding: "10px 18px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>
-            + নতুন স্টাফ
+            + New Staff
           </button>
         )}
       </div>
@@ -88,9 +88,9 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
       {/* Stats row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
         {[
-          { label: "মোট স্টাফ", value: staff.length, bg: "#faf9f7" },
-          { label: "সক্রিয়", value: staff.filter(s => s.isActive).length, bg: "#edfaf5" },
-          { label: "নিষ্ক্রিয়", value: staff.filter(s => !s.isActive).length, bg: staff.filter(s => !s.isActive).length > 0 ? "#fff0f0" : "#faf9f7" },
+          { label: "Total Staff", value: staff.length, bg: "#faf9f7" },
+          { label: "Active", value: staff.filter(s => s.isActive).length, bg: "#edfaf5" },
+          { label: "Inactive", value: staff.filter(s => !s.isActive).length, bg: staff.filter(s => !s.isActive).length > 0 ? "#fff0f0" : "#faf9f7" },
         ].map(s => (
           <div key={s.label} style={{ background: s.bg, border: "2px solid #1a1a1a", borderRadius: 14, padding: "16px 18px" }}>
             <div style={{ fontSize: 11, fontWeight: 800, color: "#a8a29e", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{s.label}</div>
@@ -102,8 +102,8 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
       {staff.length === 0 ? (
         <div style={{ textAlign: "center", padding: "60px 0", color: "#a8a29e" }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
-          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: "#1a1a1a" }}>কোনো স্টাফ সদস্য নেই</div>
-          {currentRole === "main_admin" && <button onClick={openAdd} style={{ padding: "10px 20px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>+ প্রথম স্টাফ যোগ করুন</button>}
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16, color: "#1a1a1a" }}>No staff members yet</div>
+          {currentRole === "main_admin" && <button onClick={openAdd} style={{ padding: "10px 20px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, fontWeight: 800, cursor: "pointer" }}>+ Add First Staff Member</button>}
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -121,9 +121,9 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
                     <span style={{ fontWeight: 800, fontSize: 15, color: "#1a1a1a" }}>{u.name}</span>
                     <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 99, border: `1.5px solid ${rc.border}`, background: rc.bg, color: rc.color }}>
-                      {u.role === "main_admin" ? "প্রধান অ্যাডমিন" : u.role === "admin" ? "অ্যাডমিন" : "স্টাফ"}
+                      {u.role === "main_admin" ? "Main Admin" : u.role === "admin" ? "Admin" : "Staff"}
                     </span>
-                    {!u.isActive && <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 99, border: "1.5px solid #ff6b6b", background: "#fff0f0", color: "#cc2b2b" }}>নিষ্ক্রিয়</span>}
+                    {!u.isActive && <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 99, border: "1.5px solid #ff6b6b", background: "#fff0f0", color: "#cc2b2b" }}>Inactive</span>}
                   </div>
                   <div style={{ fontSize: 12, color: "#a8a29e", fontWeight: 600, marginBottom: 8 }}>{u.email}</div>
 
@@ -137,12 +137,12 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
                     </div>
                   )}
                   {u.role === "staff" && u.permissions.length === 0 && (
-                    <span style={{ fontSize: 11, color: "#a8a29e", fontStyle: "italic" }}>কোনো অনুমতি নেই</span>
+                    <span style={{ fontSize: 11, color: "#a8a29e", fontStyle: "italic" }}>No permissions assigned</span>
                   )}
 
                   {u.lastLogin && (
                     <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "#a8a29e", marginTop: 6 }}>
-                      <Clock size={11} /> সর্বশেষ লগইন: {formatDate(u.lastLogin)}
+                      <Clock size={11} /> Last login: {formatDate(u.lastLogin)}
                     </div>
                   )}
                 </div>
@@ -150,10 +150,10 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
                 {/* Actions */}
                 {isEditable(u) && (
                   <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                    <button onClick={() => toggleActive(u)} title={u.isActive ? "নিষ্ক্রিয় করুন" : "সক্রিয় করুন"}
+                    <button onClick={() => toggleActive(u)} title={u.isActive ? "Disable" : "Enable"}
                       style={{ padding: "7px 10px", border: "1.5px solid #e2ddd7", borderRadius: 8, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700 }}>
                       {u.isActive ? <XCircle size={14} color="#cc2b2b" /> : <CheckCircle size={14} color="#52c4a0" />}
-                      {u.isActive ? "বন্ধ" : "চালু"}
+                      {u.isActive ? "Disable" : "Enable"}
                     </button>
                     <button onClick={() => openEdit(u)} style={{ padding: "7px 10px", border: "1.5px solid #1a1a1a", borderRadius: 8, background: "#fff", cursor: "pointer" }}>
                       <Pencil size={13} />
@@ -175,25 +175,25 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
           <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setModal(false)} />
           <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 18, width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto", position: "relative", zIndex: 1 }}>
             <div style={{ padding: "16px 20px", borderBottom: "2px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontWeight: 900, fontSize: 15 }}>{editUser ? "স্টাফ সম্পাদনা" : "নতুন স্টাফ যোগ করুন"}</div>
+              <div style={{ fontWeight: 900, fontSize: 15 }}>{editUser ? "Edit Staff Member" : "Add New Staff Member"}</div>
               <button onClick={() => setModal(false)} style={{ width: 28, height: 28, border: "2px solid #1a1a1a", borderRadius: 7, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
             </div>
             <form onSubmit={save} style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <div style={labelStyle}>পূর্ণ নাম</div>
+                  <div style={labelStyle}>Full Name</div>
                   <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} style={inpStyle} />
                 </div>
                 <div>
-                  <div style={labelStyle}>ইমেইল</div>
+                  <div style={labelStyle}>Email</div>
                   <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} disabled={!!editUser} style={{ ...inpStyle, opacity: editUser ? 0.6 : 1 }} />
                 </div>
               </div>
               <div>
-                <div style={labelStyle}>ভূমিকা</div>
+                <div style={labelStyle}>Role</div>
                 <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value as UserRole }))} style={inpStyle}>
-                  <option value="staff">স্টাফ</option>
-                  <option value="admin">অ্যাডমিন</option>
+                  <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
 
@@ -201,10 +201,10 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
               {form.role === "staff" && (
                 <div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                    <div style={{ ...labelStyle, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}><Shield size={13} /> অনুমতিসমূহ</div>
+                    <div style={{ ...labelStyle, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}><Shield size={13} /> Permissions</div>
                     <div style={{ display: "flex", gap: 8 }}>
-                      <button type="button" onClick={selectAllPerms} style={{ fontSize: 11, fontWeight: 700, color: "#1a7a5e", background: "#edfaf5", border: "1px solid #52c4a0", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>সব বেছে নিন</button>
-                      <button type="button" onClick={clearAllPerms} style={{ fontSize: 11, fontWeight: 700, color: "#cc2b2b", background: "#fff0f0", border: "1px solid #ff6b6b", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>সব বাতিল</button>
+                      <button type="button" onClick={selectAllPerms} style={{ fontSize: 11, fontWeight: 700, color: "#1a7a5e", background: "#edfaf5", border: "1px solid #52c4a0", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>Select All</button>
+                      <button type="button" onClick={clearAllPerms} style={{ fontSize: 11, fontWeight: 700, color: "#cc2b2b", background: "#fff0f0", border: "1px solid #ff6b6b", borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>Clear All</button>
                     </div>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -222,9 +222,9 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
               )}
 
               <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-                <button type="button" onClick={() => setModal(false)} style={{ flex: 1, padding: "11px", border: "2px solid #1a1a1a", borderRadius: 10, background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit" }}>বাতিল</button>
+                <button type="button" onClick={() => setModal(false)} style={{ flex: 1, padding: "11px", border: "2px solid #1a1a1a", borderRadius: 10, background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit" }}>Cancel</button>
                 <button type="submit" disabled={loading} style={{ flex: 1, padding: "11px", background: "#1a1a1a", color: "#fff", border: "2px solid #1a1a1a", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>
-                  {loading ? "সংরক্ষণ..." : editUser ? "পরিবর্তন সংরক্ষণ" : "স্টাফ যোগ করুন"}
+                  {loading ? "Saving..." : editUser ? "Save Changes" : "Add Staff Member"}
                 </button>
               </div>
             </form>
@@ -237,11 +237,11 @@ export function StaffClient({ initialStaff, currentRole }: { initialStaff: User[
         <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setDelUser(null)} />
           <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 16, padding: 24, maxWidth: 360, width: "100%", position: "relative", zIndex: 1 }}>
-            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 8 }}>স্টাফ মুছুন</div>
-            <div style={{ fontSize: 14, color: "#6b6560", marginBottom: 20 }}><strong>{delUser.name}</strong>-কে টিম থেকে সরাবেন? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</div>
+            <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 8 }}>Remove Staff Member</div>
+            <div style={{ fontSize: 14, color: "#6b6560", marginBottom: 20 }}>Remove <strong>{delUser.name}</strong> from the team? This cannot be undone.</div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={() => setDelUser(null)} style={{ flex: 1, padding: "11px", border: "2px solid #1a1a1a", borderRadius: 10, background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit" }}>বাতিল</button>
-              <button onClick={() => deleteUser(delUser)} style={{ flex: 1, padding: "11px", background: "#ff6b6b", color: "#fff", border: "2px solid #ff6b6b", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>সরান</button>
+              <button onClick={() => setDelUser(null)} style={{ flex: 1, padding: "11px", border: "2px solid #1a1a1a", borderRadius: 10, background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, fontFamily: "inherit" }}>Cancel</button>
+              <button onClick={() => deleteUser(delUser)} style={{ flex: 1, padding: "11px", background: "#ff6b6b", color: "#fff", border: "2px solid #ff6b6b", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 800, fontFamily: "inherit" }}>Remove</button>
             </div>
           </motion.div>
         </div>

@@ -1,6 +1,8 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
+import { NavProgress } from "@/components/layout/nav-progress";
+import { PageTransition } from "@/components/layout/page-transition";
 import { getRedis, KEYS } from "@/lib/redis";
 import type { RestaurantSettings } from "@/lib/types";
 
@@ -21,12 +23,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#faf9f7" }}>
-      {/* Sidebar — fixed height, scrollable nav */}
+      <NavProgress />
       <Sidebar session={session} restaurantName={restaurantName} />
-      {/* Main content — scrollable */}
       <main style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden" }}>
-        <div style={{ padding: "28px 28px", paddingTop: 28 }} className="lg:pt-7 pt-20">
-          {children}
+        <div style={{ padding: "28px" }}>
+          <PageTransition>
+            {children}
+          </PageTransition>
         </div>
       </main>
     </div>

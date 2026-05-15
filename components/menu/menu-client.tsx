@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -102,13 +102,13 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
       {/* Page header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>মেনু ম্যানেজমেন্ট</h1>
-          <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>ক্যাটাগরি এবং মেনু আইটেম পরিচালনা করুন</p>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>Menu Management</h1>
+          <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>Manage categories and menu items</p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           {tab === "categories"
-            ? <button onClick={openAddCat} style={addBtn}>+ ক্যাটাগরি যোগ করুন</button>
-            : <button onClick={openAdd} style={addBtn}>+ আইটেম যোগ করুন</button>}
+            ? <button onClick={openAddCat} style={addBtn}>+ Add Category</button>
+            : <button onClick={openAdd} style={addBtn}>+ Add Item</button>}
         </div>
       </div>
 
@@ -116,7 +116,7 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         {(["items", "categories"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 18px", borderRadius: 10, fontSize: 13, fontWeight: 700, border: "2px solid", borderColor: tab === t ? "#1a1a1a" : "#e2ddd7", background: tab === t ? "#1a1a1a" : "#fff", color: tab === t ? "#fff" : "#6b6560", cursor: "pointer" }}>
-            {t === "items" ? "আইটেম" : "ক্যাটাগরি"}
+            {t === "items" ? "Items" : "Categories"}
           </button>
         ))}
       </div>
@@ -127,10 +127,10 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
           <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
             <div style={{ position: "relative", maxWidth: 260 }}>
               <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#a8a29e" }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="আইটেম খুঁজুন..." style={{ padding: "9px 12px 9px 32px", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }} />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search items..." style={{ padding: "9px 12px 9px 32px", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" }} />
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {[{ id: "all", name: "সব" }, ...categories].map(c => (
+              {[{ id: "all", name: "All" }, ...categories].map(c => (
                 <button key={c.id} onClick={() => setSelCat(c.id)} style={{ padding: "8px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "2px solid", borderColor: selCat === c.id ? "#1a1a1a" : "#e2ddd7", background: selCat === c.id ? "#1a1a1a" : "#fff", color: selCat === c.id ? "#fff" : "#6b6560", cursor: "pointer" }}>
                   {c.name}
                 </button>
@@ -141,9 +141,9 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
           {filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 0", color: "#a8a29e" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🍽️</div>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>কোনো আইটেম নেই</div>
-              <div style={{ fontSize: 13, marginBottom: 16 }}>প্রথম মেনু আইটেম যোগ করুন</div>
-              <button onClick={openAdd} style={addBtn}>+ আইটেম যোগ করুন</button>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>No items found</div>
+              <div style={{ fontSize: 13, marginBottom: 16 }}>Add your first menu item</div>
+              <button onClick={openAdd} style={addBtn}>+ Add Item</button>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
@@ -158,19 +158,19 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
                   ) : (
                     <div style={{ height: 80, borderRadius: 10, background: "#f5f0e8", border: "1.5px dashed #d4cdc3", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 4 }}>
                       <span style={{ fontSize: 24 }}>🍽️</span>
-                      <span style={{ fontSize: 10, color: "#a8a29e", fontWeight: 600 }}>ছবি নেই</span>
+                       <span style={{ fontSize: 10, color: "#a8a29e", fontWeight: 600 }}>No image</span>
                     </div>
                   )}
 
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
                       <div style={{ fontWeight: 800, fontSize: 14, color: "#1a1a1a", lineHeight: 1.3 }}>{item.name}</div>
-                      <span style={statusBadge(item.status)}>{item.status === "available" ? "পাওয়া যায়" : "অনুপলব্ধ"}</span>
+                      <span style={statusBadge(item.status)}>{item.status === "available" ? "Available" : "Unavailable"}</span>
                     </div>
                     <div style={{ fontSize: 12, color: "#a8a29e", lineHeight: 1.5, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.description}</div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                      {item.isFeatured && <span style={{ ...tagStyle, background: "#fff3d4", color: "#8a6200", borderColor: "#ffb347" }}>⭐ ফিচার্ড</span>}
-                      {item.isPopular && <span style={{ ...tagStyle, background: "#fff0f0", color: "#cc2b2b", borderColor: "#ff6b6b" }}>🔥 জনপ্রিয়</span>}
+                      {item.isFeatured && <span style={{ ...tagStyle, background: "#fff3d4", color: "#8a6200", borderColor: "#ffb347" }}>Featured</span>}
+                      {item.isPopular && <span style={{ ...tagStyle, background: "#fff0f0", color: "#cc2b2b", borderColor: "#ff6b6b" }}>Popular</span>}
                       <span style={{ fontWeight: 900, fontSize: 15, color: "#ff6b6b", marginLeft: "auto" }}>{formatCurrency(item.price)}</span>
                     </div>
                   </div>
@@ -178,7 +178,7 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
                   <div style={{ display: "flex", gap: 6, borderTop: "1.5px solid #f5f0e8", paddingTop: 10 }}>
                     <button onClick={() => toggleStatus(item)} style={{ flex: 1, padding: "7px", border: "1.5px solid #e2ddd7", borderRadius: 8, background: "#faf9f7", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                       {item.status === "available" ? <ToggleRight size={14} color="#52c4a0" /> : <ToggleLeft size={14} color="#a8a29e" />}
-                      {item.status === "available" ? "চালু" : "বন্ধ"}
+                      {item.status === "available" ? "On" : "Off"}
                     </button>
                     <button onClick={() => openEdit(item)} style={{ padding: "7px 12px", border: "1.5px solid #1a1a1a", borderRadius: 8, background: "#fff", cursor: "pointer" }}>
                       <Pencil size={13} />
@@ -199,8 +199,8 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
           {categories.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 0", color: "#a8a29e" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>📂</div>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>কোনো ক্যাটাগরি নেই</div>
-              <button onClick={openAddCat} style={addBtn}>+ ক্যাটাগরি যোগ করুন</button>
+              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>No categories yet</div>
+              <button onClick={openAddCat} style={addBtn}>+ Add Category</button>
             </div>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
@@ -208,13 +208,13 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
                 <motion.div key={cat.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                   style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 14, padding: "18px 18px 14px" }}>
                   <div style={{ fontWeight: 800, fontSize: 15, color: "#1a1a1a", marginBottom: 4 }}>{cat.name}</div>
-                  <div style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10 }}>{cat.description || "কোনো বিবরণ নেই"}</div>
+                  <div style={{ fontSize: 13, color: "#a8a29e", marginBottom: 10 }}>{cat.description || "No description"}</div>
                   <div style={{ fontSize: 12, color: "#6b6560", fontWeight: 600, marginBottom: 12 }}>
-                    {items.filter(i => i.categoryId === cat.id).length} টি আইটেম
+                    {items.filter(i => i.categoryId === cat.id).length} items
                   </div>
                   <div style={{ display: "flex", gap: 8, borderTop: "1.5px solid #f5f0e8", paddingTop: 12 }}>
                     <button onClick={() => openEditCat(cat)} style={{ flex: 1, padding: "8px", border: "1.5px solid #1a1a1a", borderRadius: 8, background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                      <Pencil size={12} /> সম্পাদনা
+                      <Pencil size={12} /> Edit
                     </button>
                     <button onClick={() => setDelCat(cat)} style={{ padding: "8px 12px", border: "1.5px solid #ff6b6b", borderRadius: 8, background: "#fff0f0", cursor: "pointer" }}>
                       <Trash2 size={12} color="#cc2b2b" />
@@ -233,46 +233,46 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
           <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setItemModal(false)} />
           <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 18, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", position: "relative", zIndex: 1 }}>
             <div style={{ padding: "16px 20px", borderBottom: "2px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontWeight: 900, fontSize: 15 }}>{editItem ? "আইটেম সম্পাদনা" : "নতুন আইটেম যোগ করুন"}</div>
+              <div style={{ fontWeight: 900, fontSize: 15 }}>{editItem ? "Edit Item" : "Add New Item"}</div>
               <button onClick={() => setItemModal(false)} style={{ width: 28, height: 28, border: "2px solid #1a1a1a", borderRadius: 7, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
             </div>
             <form onSubmit={saveItem} style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div>{label("নাম")} <input required value={iForm.name} onChange={e => setIForm(f => ({ ...f, name: e.target.value }))} style={inp} /></div>
-                <div>{label("মূল্য (৳)")} <input required type="number" min={0} value={iForm.price} onChange={e => setIForm(f => ({ ...f, price: e.target.value }))} style={inp} /></div>
+                <div>{label("Name")} <input required value={iForm.name} onChange={e => setIForm(f => ({ ...f, name: e.target.value }))} style={inp} /></div>
+                <div>{label("Price (\u09F3)")} <input required type="number" min={0} value={iForm.price} onChange={e => setIForm(f => ({ ...f, price: e.target.value }))} style={inp} /></div>
               </div>
-              <div>{label("বিবরণ")} <textarea value={iForm.description} onChange={e => setIForm(f => ({ ...f, description: e.target.value }))} rows={2} style={{ ...inp, resize: "vertical" }} /></div>
+              <div>{label("Description")} <textarea value={iForm.description} onChange={e => setIForm(f => ({ ...f, description: e.target.value }))} rows={2} style={{ ...inp, resize: "vertical" }} /></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div>{label("ক্যাটাগরি")}
+                <div>{label("Category")}
                   <select required value={iForm.categoryId} onChange={e => setIForm(f => ({ ...f, categoryId: e.target.value }))} style={inp}>
-                    <option value="">বেছে নিন</option>
+                    <option value="">Select...</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
-                <div>{label("স্ট্যাটাস")}
+                <div>{label("Status")}
                   <select value={iForm.status} onChange={e => setIForm(f => ({ ...f, status: e.target.value as MenuItem["status"] }))} style={inp}>
-                    <option value="available">পাওয়া যায়</option>
-                    <option value="unavailable">অনুপলব্ধ</option>
-                    <option value="sold_out">স্টক শেষ</option>
+                    <option value="available">Available</option>
+                    <option value="unavailable">Unavailable</option>
+                    <option value="sold_out">Sold Out</option>
                   </select>
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <div>{label("প্রস্তুতির সময় (মিনিট)")} <input type="number" min={1} value={iForm.preparationTime} onChange={e => setIForm(f => ({ ...f, preparationTime: e.target.value }))} style={inp} /></div>
-                <div>{label("ট্যাগ (কমা দিয়ে)")} <input value={iForm.tags} onChange={e => setIForm(f => ({ ...f, tags: e.target.value }))} placeholder="chicken, spicy" style={inp} /></div>
+                <div>{label("Prep Time (min)")} <input type="number" min={1} value={iForm.preparationTime} onChange={e => setIForm(f => ({ ...f, preparationTime: e.target.value }))} style={inp} /></div>
+                <div>{label("Tags (comma separated)")} <input value={iForm.tags} onChange={e => setIForm(f => ({ ...f, tags: e.target.value }))} placeholder="chicken, spicy" style={inp} /></div>
               </div>
-              <div>{label("ছবির URL (ঐচ্ছিক)")} <input type="url" value={iForm.image} onChange={e => setIForm(f => ({ ...f, image: e.target.value }))} placeholder="https://..." style={inp} /></div>
+              <div>{label("Image URL (optional)")} <input type="url" value={iForm.image} onChange={e => setIForm(f => ({ ...f, image: e.target.value }))} placeholder="https://..." style={inp} /></div>
               <div style={{ display: "flex", gap: 16 }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
-                  <input type="checkbox" checked={iForm.isFeatured} onChange={e => setIForm(f => ({ ...f, isFeatured: e.target.checked }))} style={{ width: 16, height: 16 }} /> ⭐ ফিচার্ড
+                  <input type="checkbox" checked={iForm.isFeatured} onChange={e => setIForm(f => ({ ...f, isFeatured: e.target.checked }))} style={{ width: 16, height: 16 }} /> Featured
                 </label>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
-                  <input type="checkbox" checked={iForm.isPopular} onChange={e => setIForm(f => ({ ...f, isPopular: e.target.checked }))} style={{ width: 16, height: 16 }} /> 🔥 জনপ্রিয়
+                  <input type="checkbox" checked={iForm.isPopular} onChange={e => setIForm(f => ({ ...f, isPopular: e.target.checked }))} style={{ width: 16, height: 16 }} /> Popular
                 </label>
               </div>
               <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-                <button type="button" onClick={() => setItemModal(false)} style={secBtn}>বাতিল</button>
-                <button type="submit" disabled={iLoading} style={priBtn}>{iLoading ? "সংরক্ষণ হচ্ছে..." : editItem ? "পরিবর্তন সংরক্ষণ" : "আইটেম যোগ করুন"}</button>
+                <button type="button" onClick={() => setItemModal(false)} style={secBtn}>Cancel</button>
+                <button type="submit" disabled={iLoading} style={priBtn}>{iLoading ? "Saving..." : editItem ? "Save Changes" : "Add Item"}</button>
               </div>
             </form>
           </motion.div>
@@ -285,15 +285,15 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
           <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={() => setCatModal(false)} />
           <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 18, width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }}>
             <div style={{ padding: "16px 20px", borderBottom: "2px solid #1a1a1a", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ fontWeight: 900, fontSize: 15 }}>{editCat ? "ক্যাটাগরি সম্পাদনা" : "নতুন ক্যাটাগরি"}</div>
+              <div style={{ fontWeight: 900, fontSize: 15 }}>{editCat ? "Edit Category" : "New Category"}</div>
               <button onClick={() => setCatModal(false)} style={{ width: 28, height: 28, border: "2px solid #1a1a1a", borderRadius: 7, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><X size={13} /></button>
             </div>
             <form onSubmit={saveCat} style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>{label("ক্যাটাগরির নাম")} <input required value={cForm.name} onChange={e => setCForm(f => ({ ...f, name: e.target.value }))} autoFocus style={inp} /></div>
-              <div>{label("বিবরণ (ঐচ্ছিক)")} <input value={cForm.description} onChange={e => setCForm(f => ({ ...f, description: e.target.value }))} style={inp} /></div>
+              <div>{label("Category Name")} <input required value={cForm.name} onChange={e => setCForm(f => ({ ...f, name: e.target.value }))} autoFocus style={inp} /></div>
+              <div>{label("Description (optional)")} <input value={cForm.description} onChange={e => setCForm(f => ({ ...f, description: e.target.value }))} style={inp} /></div>
               <div style={{ display: "flex", gap: 10, paddingTop: 4 }}>
-                <button type="button" onClick={() => setCatModal(false)} style={secBtn}>বাতিল</button>
-                <button type="submit" disabled={cLoading} style={priBtn}>{cLoading ? "সংরক্ষণ হচ্ছে..." : editCat ? "সংরক্ষণ করুন" : "যোগ করুন"}</button>
+                <button type="button" onClick={() => setCatModal(false)} style={secBtn}>Cancel</button>
+                <button type="submit" disabled={cLoading} style={priBtn}>{cLoading ? "Saving..." : editCat ? "Save" : "Add"}</button>
               </div>
             </form>
           </motion.div>
@@ -301,8 +301,8 @@ export function MenuClient({ initialCategories, initialItems }: Props) {
       )}
 
       {/* Delete Item confirm */}
-      {delItem && <DeleteModal title="আইটেম মুছুন" msg={`"${delItem.name}" মুছে ফেলবেন?`} onCancel={() => setDelItem(null)} onConfirm={() => deleteItem(delItem)} />}
-      {delCat && <DeleteModal title="ক্যাটাগরি মুছুন" msg={`"${delCat.name}" ক্যাটাগরি মুছে ফেলবেন?`} onCancel={() => setDelCat(null)} onConfirm={() => deleteCat(delCat)} />}
+      {delItem && <DeleteModal title="Delete Item" msg={`Delete "${delItem.name}"?`} onCancel={() => setDelItem(null)} onConfirm={() => deleteItem(delItem)} />}
+      {delCat && <DeleteModal title="Delete Category" msg={`Delete category "${delCat.name}"?`} onCancel={() => setDelCat(null)} onConfirm={() => deleteCat(delCat)} />}
     </div>
   );
 }
@@ -313,10 +313,10 @@ function DeleteModal({ title, msg, onCancel, onConfirm }: { title: string; msg: 
       <div style={{ position: "absolute", inset: 0, background: "rgba(26,26,26,0.45)" }} onClick={onCancel} />
       <motion.div initial={{ scale: 0.94, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 16, padding: 24, maxWidth: 360, width: "100%", position: "relative", zIndex: 1 }}>
         <div style={{ fontWeight: 900, fontSize: 16, marginBottom: 10 }}>{title}</div>
-        <div style={{ fontSize: 14, color: "#6b6560", marginBottom: 20 }}>{msg} এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।</div>
+        <div style={{ fontSize: 14, color: "#6b6560", marginBottom: 20 }}>{msg} This action cannot be undone.</div>
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onCancel} style={secBtn}>বাতিল</button>
-          <button onClick={onConfirm} style={{ ...priBtn, background: "#ff6b6b", borderColor: "#ff6b6b" }}>মুছুন</button>
+          <button onClick={onCancel} style={secBtn}>Cancel</button>
+          <button onClick={onConfirm} style={{ ...priBtn, background: "#ff6b6b", borderColor: "#ff6b6b" }}>Delete</button>
         </div>
       </motion.div>
     </div>
@@ -330,3 +330,4 @@ const priBtn: React.CSSProperties = { flex: 1, padding: "11px", background: "#1a
 const inp: React.CSSProperties = { width: "100%", padding: "10px 12px", border: "2px solid #1a1a1a", borderRadius: 10, fontSize: 13, outline: "none", fontFamily: "inherit", background: "#faf9f7", boxSizing: "border-box" };
 const tagStyle: React.CSSProperties = { fontSize: 10, fontWeight: 700, borderRadius: 99, padding: "2px 8px", border: "1px solid" };
 const label = (text: string) => <div style={{ fontSize: 11, fontWeight: 800, color: "#1a1a1a", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{text}</div>;
+

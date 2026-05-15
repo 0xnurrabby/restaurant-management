@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+﻿import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -68,7 +68,7 @@ export default async function HomePage() {
 
             {/* Stats */}
             <div style={{ display: "flex", gap: 32, paddingTop: 20, borderTop: "2px solid #e2ddd7" }}>
-              {[["৫০০+", "Happy Guests"], ["৫০+", "Menu Items"], ["১৫ মিনিট", "Avg. Prep"]].map(([n, l]) => (
+              {[["500+", "Happy Guests"], ["50+", "Menu Items"], ["15 min", "Avg. Prep"]].map(([n, l]) => (
                 <div key={l}>
                   <div style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", lineHeight: 1 }}>{n}</div>
                   <div style={{ fontSize: 11, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>{l}</div>
@@ -126,10 +126,10 @@ export default async function HomePage() {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
           {[
-            { name: "Ribeye Steak", price: "৳১,২০০", img: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300&h=200&fit=crop&auto=format", tag: "Best Seller", tagBg: "#ff6b6b" },
-            { name: "Grilled Salmon", price: "৳৭৫০", img: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&h=200&fit=crop&auto=format", tag: "Healthy", tagBg: "#52c4a0" },
-            { name: "Margherita Pizza", price: "৳৫৫০", img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=200&fit=crop&auto=format", tag: "Popular", tagBg: "#a29bfe" },
-            { name: "Lava Cake", price: "৳২৮০", img: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=300&h=200&fit=crop&auto=format", tag: "Dessert", tagBg: "#ffb347" },
+            { name: "Ribeye Steak", price: "৳1,200", img: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=300&h=200&fit=crop&auto=format", tag: "Best Seller", tagBg: "#ff6b6b" },
+            { name: "Grilled Salmon", price: "৳750", img: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=300&h=200&fit=crop&auto=format", tag: "Healthy", tagBg: "#52c4a0" },
+            { name: "Margherita Pizza", price: "৳550", img: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=200&fit=crop&auto=format", tag: "Popular", tagBg: "#a29bfe" },
+            { name: "Lava Cake", price: "৳280", img: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=300&h=200&fit=crop&auto=format", tag: "Dessert", tagBg: "#ffb347" },
           ].map((item) => (
             <Link href="/menu" key={item.name} style={{ background: "#fff", border: "2px solid #1a1a1a", borderRadius: 16, overflow: "hidden", textDecoration: "none", display: "block" }}>
               <div style={{ height: 148, overflow: "hidden", background: "#f5f0e8", position: "relative" }}>
@@ -151,7 +151,7 @@ export default async function HomePage() {
           {[
             { icon: "📍", label: "Location", val: "Dhaka, Bangladesh" },
             { icon: "📞", label: "Phone", val: "+880 1234-567890" },
-            { icon: "🕐", label: "Hours", val: "সকাল ৯টা – রাত ১১টা" },
+            { icon: "🕐", label: "Hours", val: "9 AM – 11 PM Daily" },
           ].map((i) => (
             <div key={i.label} style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 40, height: 40, background: "#ff6b6b", border: "2px solid rgba(255,255,255,0.3)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{i.icon}</div>
@@ -170,3 +170,4 @@ export default async function HomePage() {
     </div>
   );
 }
+

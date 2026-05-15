@@ -50,21 +50,21 @@ export default async function AdminDashboard() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.02em" }}>Dashboard</h1>
-        <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>স্বাগতম, {name}</p>
+        <p style={{ fontSize: 13, color: "#a8a29e", fontWeight: 600, marginTop: 4 }}>Welcome back, {name}</p>
       </div>
 
       {/* Stats grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
-        <StatBox title="আজকের অর্ডার" value={d.todayOrders} sub="+12% গতকালের তুলনায়" color="#fff0f0" />
-        <StatBox title="আজকের আয়" value={formatCurrency(d.todayRevenue)} sub="+8% গতকালের তুলনায়" color="#edfaf5" />
-        <StatBox title="সক্রিয় টেবিল" value={`${d.activeTables}/${d.totalTables}`} color="#edf5ff" />
-        <StatBox title="রান্নাঘর কিউ" value={d.kitchenQueue} color={d.kitchenQueue > 5 ? "#fff8ec" : "#faf9f7"} />
+        <StatBox title="Today's Orders" value={d.todayOrders} sub="+12% vs yesterday" color="#fff0f0" />
+        <StatBox title="Today's Revenue" value={formatCurrency(d.todayRevenue)} sub="+8% vs yesterday" color="#edfaf5" />
+        <StatBox title="Active Tables" value={`${d.activeTables}/${d.totalTables}`} color="#edf5ff" />
+        <StatBox title="Kitchen Queue" value={d.kitchenQueue} color={d.kitchenQueue > 5 ? "#fff8ec" : "#faf9f7"} />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
-        <StatBox title="সক্রিয় অর্ডার" value={d.activeOrders} color="#f0eeff" />
-        <StatBox title="কম স্টক আইটেম" value={d.lowStock} color={d.lowStock > 0 ? "#fff0f0" : "#faf9f7"} />
-        <StatBox title="মোট অর্ডার" value={d.totalOrders} color="#faf9f7" />
-        <StatBox title="মোট টেবিল" value={d.totalTables} color="#edf5ff" />
+        <StatBox title="Active Orders" value={d.activeOrders} color="#f0eeff" />
+        <StatBox title="Low Stock Items" value={d.lowStock} color={d.lowStock > 0 ? "#fff0f0" : "#faf9f7"} />
+        <StatBox title="Total Orders" value={d.totalOrders} color="#faf9f7" />
+        <StatBox title="Total Tables" value={d.totalTables} color="#edf5ff" />
       </div>
 
       {/* Charts + Recent */}
