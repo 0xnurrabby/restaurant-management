@@ -42,7 +42,7 @@ const allNavItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings, permission: "settings" },
 ];
 
-export function Sidebar({ session, restaurantName = "Savoria" }: SidebarProps) {
+export function Sidebar({ session, restaurantName = "Zunayed" }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);

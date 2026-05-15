@@ -8,7 +8,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Savoria - Restaurant Management",
+  title: "Zunayed Restaurant - Management",
   description: "Modern restaurant management system",
 };
 

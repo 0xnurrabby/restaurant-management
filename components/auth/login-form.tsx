@@ -87,7 +87,7 @@ export function LoginForm() {
             <ChefHat size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-none">Savoria</h1>
+            <h1 className="text-lg font-bold leading-none">Zunayed Restaurant</h1>
             <p className="text-xs text-stone-500 mt-0.5">Restaurant Management</p>
           </div>
         </div>

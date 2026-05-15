@@ -22,7 +22,7 @@ export default async function HomePage() {
           <div className="w-16 h-16 bg-black rounded-3xl flex items-center justify-center mx-auto mb-6">
             <ChefHat size={28} className="text-white" />
           </div>
-          <h1 className="text-4xl font-bold mb-3">Savoria</h1>
+          <h1 className="text-4xl font-bold mb-3">Zunayed Restaurant</h1>
           <p className="text-lg text-stone-500 mb-8">Fine Dining & Fresh Flavors</p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link

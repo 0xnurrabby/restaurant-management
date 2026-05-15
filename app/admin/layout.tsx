@@ -13,7 +13,7 @@ export default async function AdminLayout({
   if (!session) redirect("/login");
   if (session.role === "customer") redirect("/menu");
 
-  let restaurantName = "Savoria";
+  let restaurantName = "Zunayed";
   try {
     const redis = getRedis();
     const raw = await redis.get(KEYS.settings);

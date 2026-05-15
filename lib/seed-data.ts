@@ -481,11 +481,11 @@ export const seedInventory: InventoryItem[] = [
 ];
 
 export const defaultSettings: RestaurantSettings = {
-  name: "Savoria Restaurant",
+  name: "Zunayed Restaurant",
   tagline: "Fine Dining & Fresh Flavors",
-  address: "123 Main Street, New York, NY 10001",
-  phone: "+1 (555) 123-4567",
-  email: "hello@savoria.com",
+  address: "123 Main Street, Dhaka, Bangladesh",
+  phone: "+880 1234-567890",
+  email: "hello@zunayedrestaurant.com",
   currency: "USD",
   taxRate: 8.5,
   openingHours: [
