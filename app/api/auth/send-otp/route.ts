@@ -4,7 +4,11 @@ import { getRedis, KEYS } from "@/lib/redis";
 import { generateOTP } from "@/lib/utils";
 import { isMainAdmin } from "@/lib/auth";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY is not configured");
+  return new Resend(key);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,6 +40,7 @@ export async function POST(req: NextRequest) {
     const restaurantName =
       (settings as { name?: string })?.name || "Restaurant";
 
+    const resend = getResend();
     await resend.emails.send({
       from: `${restaurantName} <noreply@resend.dev>`,
       to: email,
