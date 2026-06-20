@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,6,30&height=180&section=header&text=Restaurant+Management&fontSize=50&fontColor=000000&fontAlignY=38&desc=Next.js+restaurant+dashboard+for+orders%2C+POS%2C+inventory%2C+staff%2C+and+reports&descAlignY=58&descSize=14&animation=fadeIn" width="100%"/>
 
-## Getting Started
+<div align="center">
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16-FED7AA?style=for-the-badge&labelColor=1a1a1a&logoColor=1a1a1a)
+![TypeScript](https://img.shields.io/badge/TypeScript-App+Router-BFDBFE?style=for-the-badge&labelColor=1a1a1a&logoColor=1a1a1a)
+![Storage](https://img.shields.io/badge/Storage-Upstash+Redis-BBF7D0?style=for-the-badge&labelColor=1a1a1a&logoColor=1a1a1a)
+![Email](https://img.shields.io/badge/Email-Resend+OTP-FBCFE8?style=for-the-badge&labelColor=1a1a1a&logoColor=1a1a1a)
 
-```bash
+</div>
+
+<div align="center">
+<i>A practical restaurant back office with menu management, table layout, kitchen display, inventory, staff login, and reporting in one place.</i>
+</div>
+
+---
+
+## Features
+
+| Feature | What it does |
+| --- | --- |
+| Admin dashboard | Manage orders, menu items, tables, inventory, staff, settings, and reports. |
+| Customer menu | Public menu page for browsing items and placing orders. |
+| OTP login | Email-based login flow backed by Resend and Redis session storage. |
+| Seed data | One API route fills Redis with sample categories, tables, menu items, and inventory. |
+| Modern UI | Next.js, TypeScript, Tailwind CSS, Radix components, Recharts, and Framer Motion. |
+
+---
+
+## Download and Run
+
+```powershell
+git clone https://github.com/0xnurrabby/restaurant-management.git
+cd restaurant-management
+npm install
+copy NUL .env.local            # Windows: creates an empty env file
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. Admin pages live under `/admin`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup
 
-## Learn More
+Create `.env.local` in the project root:
 
-To learn more about Next.js, take a look at the following resources:
+```env
+UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
+RESEND_API_KEY=your_resend_api_key
+MAIN_ADMIN_EMAILS=you@example.com
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Then seed demo data after the server is running:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+curl -X POST http://localhost:3000/api/seed
+```
 
-## Deploy on Vercel
+On Windows without `curl`, open PowerShell and run:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```powershell
+Invoke-RestMethod -Method Post http://localhost:3000/api/seed
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Project Structure
+
+```text
+restaurant-management/
+  app/                  -> App Router pages, admin screens, API routes
+  app/api/seed/         -> demo data seeder for Redis
+  components/           -> shared UI components
+  lib/                  -> auth, Redis, seed data, types, helpers
+  public/               -> static assets
+  package.json          -> scripts and dependencies
+```
+
+---
+
+## Notes
+
+- Use Node.js 20 or newer for the smoothest Next.js 16 setup.
+- The app expects Redis and Resend env vars before OTP login can work.
+- Do not commit `.env.local`; it contains live service credentials.
+
+---
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=1,6,30&height=90&section=footer" width="100%"/>
+
+<p align="center">
+  <sub>MIT License unless noted otherwise. Built by <a href="https://github.com/0xnurrabby">0xnurrabby</a>.</sub>
+</p>
